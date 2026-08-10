@@ -8,11 +8,11 @@ services:
       POSTGRES_PASSWORD: collab_dev_password
       POSTGRES_DB: collab
     ports:
-      - '5432:5432'
+      - "5433:5432"
     volumes:
       - db_data:/var/lib/postgresql
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U collab -d collab']
+      test: ["CMD-SHELL", "pg_isready -U collab -d collab"]
       interval: 5s
       timeout: 5s
       retries: 10
