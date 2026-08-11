@@ -14,6 +14,7 @@ import type { Env } from '../config/env.validation';
             useFactory: (config: ConfigService<Env, true>) =>
                 new Pool({
                     connectionString: config.get('DATABASE_URL', { infer: true }),
+                    application_name: 'collab-api',
                     max: 10,
                     idleTimeoutMillis: 30_000,
                     connectionTimeoutMillis: 5_000,
