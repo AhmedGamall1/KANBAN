@@ -17,5 +17,17 @@ services:
       timeout: 5s
       retries: 10
 
+  adminer:
+    image: adminer:5
+    container_name: collab_adminer
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ADMINER_DEFAULT_SERVER: db
+    ports:
+      - "8080:8080"
+
 volumes:
   db_data:
