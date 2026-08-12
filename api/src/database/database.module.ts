@@ -7,21 +7,21 @@ import type { Env } from '../config/env.validation';
 
 @Global()
 @Module({
-    providers: [
-        {
-            provide: PG_POOL,
-            inject: [ConfigService],
-            useFactory: (config: ConfigService<Env, true>) =>
-                new Pool({
-                    connectionString: config.get('DATABASE_URL', { infer: true }),
-                    application_name: 'collab-api',
-                    max: 10,
-                    idleTimeoutMillis: 30_000,
-                    connectionTimeoutMillis: 5_000,
-                }),
-        },
-        DatabaseService,
-    ],
-    exports: [DatabaseService],
+  providers: [
+    {
+      provide: PG_POOL,
+      inject: [ConfigService],
+      useFactory: (config: ConfigService<Env, true>) =>
+        new Pool({
+          connectionString: config.get('DATABASE_URL', { infer: true }),
+          application_name: 'collab-api',
+          max: 10,
+          idleTimeoutMillis: 30_000,
+          connectionTimeoutMillis: 5_000,
+        }),
+    },
+    DatabaseService,
+  ],
+  exports: [DatabaseService],
 })
-export class DatabaseModule { }
+export class DatabaseModule {}
