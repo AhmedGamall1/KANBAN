@@ -1,9 +1,10 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { type User, UsersRepository } from 'src/users/users.repository';
 import { SessionsRepository } from './sessions.repository';
 import { SignupDto } from './dto/signup.dto';
 import * as argon2 from 'argon2'
 import { createHash, randomBytes } from 'crypto';
+import { LoginDto } from './dto/login.dto';
 
 
 const AVATAR_COLORS = [
@@ -66,6 +67,28 @@ export class AuthService {
         return { user, token: await this.createSession(user.id) };
     }
 
+    async login(dto: LoginDto): Promise<{ user: User, token: string }> {
+        const found = await this.users.findCredentialsByEmail(dto.email)
+
+        if (!found) {
+            // to make the attacker wait the same time if the email found
+            await argon2.hash(dto.password);
+            throw new UnauthorizedException('Invalid email or password');
+        }
+
+        const valid = await argon2.verify(found.passwordHash, dto.password);
+
+        if (!valid) {
+            throw new UnauthorizedException('Invalid email or password');
+        }
+
+        return { user: found.user, token: await this.createSession(found.user.id) };
+    }
+
+    async logout(token: string): Promise<void> {
+        await this.sessions.deleteByTokenHash(hashToken(token))
+    }
+
     private async createSession(userId: string): Promise<string> {
         const token = randomBytes(32).toString('base64url');
         const expiresAt = new Date(
@@ -77,3 +100,4 @@ export class AuthService {
         return token;
     }
 }
+

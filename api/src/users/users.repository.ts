@@ -30,7 +30,7 @@ function toUser(row: UserRow): User {
 
 @Injectable()
 export class UsersRepository {
-  constructor(private readonly db: DatabaseService) {}
+  constructor(private readonly db: DatabaseService) { }
 
   async create(input: {
     email: string;
@@ -46,5 +46,20 @@ export class UsersRepository {
     );
 
     return toUser(rows[0]);
+  }
+
+  async findCredentialsByEmail(
+    email: string,
+  ): Promise<{ user: User; passwordHash: string } | null> {
+    const { rows } = await this.db.query<UserRow>(
+      `SELECT * FROM users WHERE email = $1`,
+      [email],
+    );
+
+    if (!rows[0]) {
+      return null;
+    }
+
+    return { user: toUser(rows[0]), passwordHash: rows[0].password_hash };
   }
 }
