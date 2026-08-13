@@ -3,7 +3,7 @@ import { type User, UsersRepository } from 'src/users/users.repository';
 import { SessionsRepository } from './sessions.repository';
 import { SignupDto } from './dto/signup.dto';
 import * as argon2 from 'argon2'
-import { createHash, randomBytes } from 'crypto';
+import { createHash, hash, randomBytes } from 'crypto';
 import { LoginDto } from './dto/login.dto';
 
 
@@ -87,6 +87,10 @@ export class AuthService {
 
     async logout(token: string): Promise<void> {
         await this.sessions.deleteByTokenHash(hashToken(token))
+    }
+
+    async validateSession(token: string): Promise<User | null> {
+        return this.sessions.findUserByTokenHash(hashToken(token))
     }
 
     private async createSession(userId: string): Promise<string> {

@@ -9,7 +9,7 @@ export interface User {
   createdAt: Date;
 }
 
-interface UserRow {
+export interface UserRow {
   id: string;
   email: string;
   password_hash: string;
@@ -18,7 +18,7 @@ interface UserRow {
   created_at: Date;
 }
 
-function toUser(row: UserRow): User {
+export function toUser(row: UserRow): User {
   return {
     id: row.id,
     email: row.email,

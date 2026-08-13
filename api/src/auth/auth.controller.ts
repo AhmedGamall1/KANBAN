@@ -1,6 +1,7 @@
 import {
     Body,
     Controller,
+    Get,
     HttpCode,
     HttpStatus,
     Post,
@@ -14,6 +15,9 @@ import type { Env } from '../config/env.validation';
 import { AuthService, SESSION_TTL_DAYS } from './auth.service';
 import { loginSchema, type LoginDto } from './dto/login.dto';
 import { signupSchema, type SignupDto } from './dto/signup.dto';
+import { CurrentUser } from 'src/common/current-user.decorator';
+import type { User } from 'src/users/users.repository';
+import { Public } from 'src/common/public.decorator';
 
 @Controller('auth')
 export class AuthController {
@@ -32,6 +36,7 @@ export class AuthController {
         };
     }
 
+    @Public()
     @Post('signup') // default 201 created
     async signup(
         @Body(new ZodValidationPipe(signupSchema)) dto: SignupDto,
@@ -42,6 +47,7 @@ export class AuthController {
         return { user };
     }
 
+    @Public()
     @Post('login')
     @HttpCode(HttpStatus.OK) // 200
     async login(
@@ -53,6 +59,7 @@ export class AuthController {
         return { user };
     }
 
+    @Public()
     @Post('logout')
     @HttpCode(HttpStatus.NO_CONTENT) // 204
     async logout(
@@ -66,5 +73,10 @@ export class AuthController {
         }
 
         res.clearCookie('sid', { path: '/' });
+    }
+
+    @Get('me')
+    me(@CurrentUser() user: User) {
+        return { user }
     }
 }
