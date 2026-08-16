@@ -122,4 +122,17 @@ export class MembersRepository {
 
         return rows[0] ? toMember(rows[0]) : null;
     }
+
+
+    async addIfAbsent(
+        input: { workspaceId: string; userId: string; role: Role },
+        tx?: Queryable,
+    ): Promise<void> {
+        await (tx ?? this.db).query(
+            `INSERT INTO workspace_members (workspace_id, user_id, role)
+       VALUES ($1, $2, $3)
+       ON CONFLICT (workspace_id, user_id) DO NOTHING`,
+            [input.workspaceId, input.userId, input.role],
+        );
+    }
 }

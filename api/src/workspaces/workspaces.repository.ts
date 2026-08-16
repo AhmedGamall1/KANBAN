@@ -51,4 +51,13 @@ export class WorkspacesRepository {
     async lockForUpdate(id: string, tx: Queryable): Promise<void> {
         await tx.query(`SELECT id FROM workspaces WHERE id = $1 FOR UPDATE`, [id]);
     }
+
+    async findById(id: string): Promise<Workspace | null> {
+        const { rows } = await this.db.query<WorkspaceRow>(
+            `SELECT * FROM workspaces WHERE id = $1`,
+            [id],
+        );
+
+        return rows[0] ? toWorkspace(rows[0]) : null;
+    }
 }
