@@ -5,6 +5,8 @@ import { DatabaseModule } from './database/database.module';
 import { HealthModule } from './health/health.module';
 import { AuthModule } from './auth/auth.module';
 import { WorkspacesModule } from './workspaces/workspaces.module';
+import { APP_FILTER } from '@nestjs/core';
+import { PostgresExceptionFilter } from './common/postgres-exception.filter';
 
 @Module({
   imports: [
@@ -17,6 +19,9 @@ import { WorkspacesModule } from './workspaces/workspaces.module';
     HealthModule,
     AuthModule,
     WorkspacesModule
+  ],
+  providers: [
+    { provide: APP_FILTER, useClass: PostgresExceptionFilter },
   ],
 })
 export class AppModule { }
