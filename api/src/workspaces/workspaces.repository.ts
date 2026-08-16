@@ -47,4 +47,8 @@ export class WorkspacesRepository {
 
         return rows.map((row) => ({ ...toWorkspace(row), role: row.role }));
     }
+
+    async lockForUpdate(id: string, tx: Queryable): Promise<void> {
+        await tx.query(`SELECT id FROM workspaces WHERE id = $1 FOR UPDATE`, [id]);
+    }
 }
