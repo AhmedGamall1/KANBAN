@@ -9,7 +9,9 @@ const MIGRATIONS_DIR = join(__dirname, '..', 'migrations');
 const LOCK_ID = 918_273_645;
 
 async function main(): Promise<void> {
-    const client = new Client({ connectionString: process.env.DATABASE_URL });
+    const client = new Client({
+        connectionString: process.env.MIGRATION_DATABASE_URL,
+    });
     await client.connect();
 
     try {
