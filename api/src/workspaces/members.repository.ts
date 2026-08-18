@@ -56,9 +56,8 @@ export class MembersRepository {
         userId: string,
         tx?: Queryable,
     ): Promise<Role | null> {
-        const { rows } = await (tx ?? this.db).query<{ role: Role }>(
-            `SELECT role FROM workspace_members
-        WHERE workspace_id = $1 AND user_id = $2`,
+        const { rows } = await (tx ?? this.db).query<{ role: Role | null }>(
+            `SELECT app_member_role($1, $2) AS role`,
             [workspaceId, userId],
         );
 

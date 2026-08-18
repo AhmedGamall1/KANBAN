@@ -4,6 +4,8 @@ import { Pool } from 'pg';
 import { PG_POOL } from './database.constants';
 import { DatabaseService } from './database.service';
 import type { Env } from '../config/env.validation';
+import { APP_INTERCEPTOR } from '@nestjs/core';
+import { RequestTransactionInterceptor } from './request-transaction.interceptor';
 
 @Global()
 @Module({
@@ -20,8 +22,9 @@ import type { Env } from '../config/env.validation';
           connectionTimeoutMillis: 5_000,
         }),
     },
+    { provide: APP_INTERCEPTOR, useClass: RequestTransactionInterceptor },
     DatabaseService,
   ],
   exports: [DatabaseService],
 })
-export class DatabaseModule {}
+export class DatabaseModule { }

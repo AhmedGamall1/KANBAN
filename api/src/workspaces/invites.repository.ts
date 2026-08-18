@@ -41,13 +41,14 @@ export class InvitesRepository {
         return rows[0] ? toInvite(rows[0]) : null;
     }
 
-    async findByToken(token: string): Promise<Invite | null> {
-        const { rows } = await this.db.query<InviteRow>(
-            `SELECT * FROM invites WHERE token = $1`,
+
+    async findWorkspaceIdByToken(token: string): Promise<string | null> {
+        const { rows } = await this.db.query<{ workspace_id: string | null }>(
+            `SELECT app_invite_workspace($1) AS workspace_id`,
             [token],
         );
 
-        return rows[0] ? toInvite(rows[0]) : null;
+        return rows[0]?.workspace_id ?? null;
     }
 
     async create(

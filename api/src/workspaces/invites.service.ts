@@ -42,20 +42,16 @@ export class InvitesService {
         token: string,
         userId: string,
     ): Promise<{ workspace: Workspace; role: Role }> {
-        const invite = await this.invites.findByToken(token);
+        const workspaceId = await this.invites.findWorkspaceIdByToken(token);
 
-        if (!invite) {
+        if (!workspaceId) {
             throw new NotFoundException('Invite not found');
         }
 
-        await this.members.addIfAbsent({
-            workspaceId: invite.workspaceId,
-            userId,
-            role: 'member',
-        });
+        await this.members.addIfAbsent({ workspaceId, userId, role: 'member' });
 
-        const workspace = await this.workspaces.findById(invite.workspaceId);
-        const role = await this.members.findRole(invite.workspaceId, userId);
+        const workspace = await this.workspaces.findById(workspaceId);
+        const role = await this.members.findRole(workspaceId, userId);
 
         if (!workspace || !role) {
             throw new NotFoundException('Workspace not found');

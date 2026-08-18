@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import type { Pool, QueryResult, QueryResultRow } from 'pg';
 import { PG_POOL } from './database.constants';
+import { requestContext } from './request-context';
 
 export interface Queryable {
   query<T extends QueryResultRow>(
@@ -40,10 +41,22 @@ export class DatabaseService
     text: string,
     params?: readonly unknown[],
   ): Promise<QueryResult<T>> {
+    const store = requestContext.getStore();
+
+    if (store) {
+      return store.tx.query<T>(text, params);
+    }
+
     return this.pool.query<T>(text, params as unknown[]);
   }
 
   async transaction<T>(fn: (tx: Queryable) => Promise<T>): Promise<T> {
+    const store = requestContext.getStore();
+
+    if (store) {
+      return fn(store.tx);
+    }
+
     const client = await this.pool.connect();
 
     const tx: Queryable = {

@@ -52,8 +52,26 @@ export class WorkspacesRepository {
         await tx.query(`SELECT id FROM workspaces WHERE id = $1 FOR UPDATE`, [id]);
     }
 
-    async findById(id: string): Promise<Workspace | null> {
-        const { rows } = await this.db.query<WorkspaceRow>(
+    async nextId(tx?: Queryable): Promise<string> {
+        const { rows } = await (tx ?? this.db).query<{ id: string }>(
+            `SELECT uuidv7() AS id`,
+        );
+
+        return rows[0].id;
+    }
+
+    async insert(
+        input: { id: string; name: string },
+        tx?: Queryable,
+    ): Promise<void> {
+        await (tx ?? this.db).query(
+            `INSERT INTO workspaces (id, name) VALUES ($1, $2)`,
+            [input.id, input.name],
+        );
+    }
+
+    async findById(id: string, tx?: Queryable): Promise<Workspace | null> {
+        const { rows } = await (tx ?? this.db).query<WorkspaceRow>(
             `SELECT * FROM workspaces WHERE id = $1`,
             [id],
         );
