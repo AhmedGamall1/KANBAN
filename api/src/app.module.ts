@@ -7,6 +7,7 @@ import { AuthModule } from './auth/auth.module';
 import { WorkspacesModule } from './workspaces/workspaces.module';
 import { APP_FILTER } from '@nestjs/core';
 import { PostgresExceptionFilter } from './common/postgres-exception.filter';
+import { BoardsModule } from './boards/boards.module';
 
 @Module({
   imports: [
@@ -18,7 +19,8 @@ import { PostgresExceptionFilter } from './common/postgres-exception.filter';
     DatabaseModule,
     HealthModule,
     AuthModule,
-    WorkspacesModule
+    WorkspacesModule,
+    BoardsModule
   ],
   providers: [
     { provide: APP_FILTER, useClass: PostgresExceptionFilter },
