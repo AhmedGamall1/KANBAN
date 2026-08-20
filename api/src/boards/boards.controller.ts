@@ -1,33 +1,43 @@
 import {
     Body,
     Controller,
+    Delete,
     Get,
+    HttpCode,
+    HttpStatus,
     Param,
-    Post,
+    Patch,
     UseGuards,
 } from '@nestjs/common';
 import { ZodValidationPipe } from '../common/zod-validation.pipe';
 import { Roles } from '../workspaces/roles.decorator';
-import { WorkspaceMemberGuard } from '../workspaces/workspace-member.guard';
+import { BoardMemberGuard } from './board-member.guard';
 import { BoardsService } from './boards.service';
-import { createBoardSchema, type CreateBoardDto } from './dto/create-board.dto';
+import { updateBoardSchema, type UpdateBoardDto } from './dto/update-board.dto';
 
-@Controller('workspaces/:id/boards')
-@UseGuards(WorkspaceMemberGuard)
+@Controller('boards')
+@UseGuards(BoardMemberGuard)
 export class BoardsController {
     constructor(private readonly boards: BoardsService) { }
 
-    @Get()
-    async list(@Param('id') workspaceId: string) {
-        return { boards: await this.boards.listByWorkspace(workspaceId) };
+    @Get(':id')
+    async get(@Param('id') id: string) {
+        return { board: await this.boards.getById(id) };
     }
 
-    @Post()
+    @Patch(':id')
     @Roles('owner', 'member')
-    async create(
-        @Param('id') workspaceId: string,
-        @Body(new ZodValidationPipe(createBoardSchema)) dto: CreateBoardDto,
+    async rename(
+        @Param('id') id: string,
+        @Body(new ZodValidationPipe(updateBoardSchema)) dto: UpdateBoardDto,
     ) {
-        return { board: await this.boards.create(workspaceId, dto) };
+        return { board: await this.boards.rename(id, dto.name) };
+    }
+
+    @Delete(':id')
+    @Roles('owner', 'member')
+    @HttpCode(HttpStatus.NO_CONTENT)
+    async remove(@Param('id') id: string): Promise<void> {
+        await this.boards.remove(id);
     }
 }

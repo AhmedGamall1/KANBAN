@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseService, type Queryable } from '../database/database.service';
+import type { Role } from '../workspaces/members.repository';
 
 export interface Board {
     id: string;
@@ -49,5 +50,41 @@ export class BoardsRepository {
         );
 
         return toBoard(rows[0]);
+    }
+
+    async findRole(boardId: string, userId: string): Promise<Role | null> {
+        const { rows } = await this.db.query<{ role: Role | null }>(
+            `SELECT app_board_role($1, $2) AS role`,
+            [boardId, userId],
+        );
+
+        return rows[0]?.role ?? null;
+    }
+
+    async findById(id: string): Promise<Board | null> {
+        const { rows } = await this.db.query<BoardRow>(
+            `SELECT * FROM boards WHERE id = $1`,
+            [id],
+        );
+
+        return rows[0] ? toBoard(rows[0]) : null;
+    }
+
+    async rename(id: string, name: string): Promise<Board | null> {
+        const { rows } = await this.db.query<BoardRow>(
+            `UPDATE boards SET name = $2 WHERE id = $1 RETURNING *`,
+            [id, name],
+        );
+
+        return rows[0] ? toBoard(rows[0]) : null;
+    }
+
+    async remove(id: string): Promise<boolean> {
+        const { rowCount } = await this.db.query(
+            `DELETE FROM boards WHERE id = $1`,
+            [id],
+        );
+
+        return (rowCount ?? 0) > 0;
     }
 }
