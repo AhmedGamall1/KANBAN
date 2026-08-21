@@ -2,12 +2,14 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { BoardsRepository, type Board } from './boards.repository';
 import type { CreateBoardDto } from './dto/create-board.dto';
 import { Column, ColumnsRepository } from './columns.repository';
+import { Card, CardsRepository } from './cards.repository';
 
 @Injectable()
 export class BoardsService {
     constructor(
         private readonly boards: BoardsRepository,
         private readonly columns: ColumnsRepository,
+        private readonly cards: CardsRepository,
     ) { }
 
     listByWorkspace(workspaceId: string): Promise<Board[]> {
@@ -18,14 +20,20 @@ export class BoardsService {
         return this.boards.create({ workspaceId, name: dto.name });
     }
 
-    async getById(id: string): Promise<{ board: Board; columns: Column[] }> {
+    async getById(
+        id: string,
+    ): Promise<{ board: Board; columns: Column[]; cards: Card[] }> {
         const board = await this.boards.findById(id);
 
         if (!board) {
             throw new NotFoundException('Board not found');
         }
 
-        return { board, columns: await this.columns.listByBoard(id) };
+        return {
+            board,
+            columns: await this.columns.listByBoard(id),
+            cards: await this.cards.listByBoard(id),
+        };
     }
 
     async rename(id: string, name: string): Promise<Board> {
