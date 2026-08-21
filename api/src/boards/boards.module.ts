@@ -8,11 +8,13 @@ import { WorkspaceBoardsController } from './workspace-boards.controller';
 import { BoardColumnsController } from './board-columns.controller';
 import { ColumnsRepository } from './columns.repository';
 import { ColumnsService } from './columns.service';
+import { ColumnsController } from './columns.controller';
+import { ColumnMemberGuard } from './column-member.guard';
 
 @Module({
     imports: [WorkspacesModule],
-    controllers: [WorkspaceBoardsController, BoardColumnsController, BoardsController],
-    providers: [BoardsService, BoardsRepository, ColumnsRepository, ColumnsService, BoardMemberGuard],
+    controllers: [WorkspaceBoardsController, BoardColumnsController, ColumnsController, BoardsController],
+    providers: [BoardsService, BoardsRepository, ColumnsRepository, ColumnMemberGuard, ColumnsService, BoardMemberGuard],
     exports: [BoardsRepository, BoardMemberGuard],
 })
 export class BoardsModule { }

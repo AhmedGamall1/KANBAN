@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseService, type Queryable } from '../database/database.service';
+import type { Role } from '../workspaces/members.repository';
 
 export interface Column {
     id: string;
@@ -62,5 +63,68 @@ export class ColumnsRepository {
         );
 
         return toColumn(rows[0]);
+    }
+
+    async findRole(columnId: string, userId: string): Promise<Role | null> {
+        const { rows } = await this.db.query<{ role: Role | null }>(
+            `SELECT app_column_role($1, $2) AS role`,
+            [columnId, userId],
+        );
+
+        return rows[0]?.role ?? null;
+    }
+
+    async findById(id: string, tx?: Queryable): Promise<Column | null> {
+        const { rows } = await (tx ?? this.db).query<ColumnRow>(
+            `SELECT * FROM columns WHERE id = $1`,
+            [id],
+        );
+
+        return rows[0] ? toColumn(rows[0]) : null;
+    }
+
+    async rename(id: string, name: string, tx?: Queryable): Promise<void> {
+        await (tx ?? this.db).query(
+            `UPDATE columns SET name = $2 WHERE id = $1`,
+            [id, name],
+        );
+    }
+
+    async setPosition(id: string, position: number, tx?: Queryable): Promise<void> {
+        await (tx ?? this.db).query(
+            `UPDATE columns SET position = $2 WHERE id = $1`,
+            [id, position],
+        );
+    }
+
+    async shiftForMove(
+        boardId: string,
+        from: number,
+        to: number,
+        tx: Queryable,
+    ): Promise<number> {
+        const { rowCount } =
+            to < from
+                ? await tx.query(
+                    `UPDATE columns SET position = position + 1
+              WHERE board_id = $1 AND position >= $2 AND position < $3`,
+                    [boardId, to, from],
+                )
+                : await tx.query(
+                    `UPDATE columns SET position = position - 1
+              WHERE board_id = $1 AND position > $2 AND position <= $3`,
+                    [boardId, from, to],
+                );
+
+        return rowCount ?? 0;
+    }
+
+    async remove(id: string): Promise<boolean> {
+        const { rowCount } = await this.db.query(
+            `DELETE FROM columns WHERE id = $1`,
+            [id],
+        );
+
+        return (rowCount ?? 0) > 0;
     }
 }
