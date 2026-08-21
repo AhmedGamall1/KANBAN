@@ -21,8 +21,8 @@ export class BoardsController {
     constructor(private readonly boards: BoardsService) { }
 
     @Get(':id')
-    async get(@Param('id') id: string) {
-        return { board: await this.boards.getById(id) };
+    get(@Param('id') id: string) {
+        return this.boards.getById(id);
     }
 
     @Patch(':id')
