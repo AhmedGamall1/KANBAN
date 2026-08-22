@@ -167,4 +167,30 @@ export class CardsRepository {
 
         return rows[0] ? toCard(rows[0]) : null;
     }
+
+
+    async midpointBetween(
+        prevId: string | null,
+        nextId: string | null,
+        tx: Queryable,
+    ): Promise<string> {
+        const { rows } = await tx.query<{ position: string }>(
+            `SELECT (
+         CASE
+           WHEN prev IS NULL AND next IS NULL THEN 1
+           WHEN prev IS NULL THEN next / 2
+           WHEN next IS NULL THEN prev + 1
+           ELSE (prev + next) / 2
+         END
+       )::text AS position
+       FROM (
+         SELECT
+           (SELECT position FROM cards WHERE id = $1) AS prev,
+           (SELECT position FROM cards WHERE id = $2) AS next
+       ) AS neighbours`,
+            [prevId, nextId],
+        );
+
+        return rows[0].position;
+    }
 }

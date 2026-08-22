@@ -14,13 +14,6 @@ function isForeignKeyViolation(error: unknown): boolean {
     );
 }
 
-function midpoint(prev: string | null, next: string | null): string {
-    if (prev === null && next === null) return '1';
-    if (prev === null) return String(Number(next) / 2);
-    if (next === null) return String(Number(prev) + 1);
-
-    return String((Number(prev) + Number(next)) / 2);
-}
 
 @Injectable()
 export class CardsService {
@@ -103,8 +96,11 @@ export class CardsService {
                 throw new BadRequestException('Neighbour is not in the target column');
             }
 
-            const position = midpoint(prev?.position ?? null, next?.position ?? null);
-
+            const position = await this.cards.midpointBetween(
+                dto.prevCardId,
+                dto.nextCardId,
+                tx,
+            );
             const moved = await this.cards.place(cardId, dto.columnId, position, tx);
 
             if (!moved) {
