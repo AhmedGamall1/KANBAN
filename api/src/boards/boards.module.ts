@@ -1,3 +1,4 @@
+import { CardsController } from './cards.controller';
 import { CardsRepository } from './cards.repository';
 import { CardsService } from './cards.service';
 import { Module } from '@nestjs/common';
@@ -13,11 +14,12 @@ import { ColumnsService } from './columns.service';
 import { ColumnsController } from './columns.controller';
 import { ColumnMemberGuard } from './column-member.guard';
 import { BoardCardsController } from './board-cards.controller';
+import { CardMemberGuard } from './card-member.guard';
 
 @Module({
     imports: [WorkspacesModule],
-    controllers: [WorkspaceBoardsController, BoardColumnsController, BoardCardsController, ColumnsController, BoardsController],
-    providers: [BoardsService, BoardsRepository, ColumnsRepository, ColumnMemberGuard, CardsService, CardsRepository, ColumnsService, BoardMemberGuard],
+    controllers: [WorkspaceBoardsController, BoardColumnsController, CardsController, BoardCardsController, ColumnsController, BoardsController],
+    providers: [BoardsService, BoardsRepository, ColumnsRepository, ColumnMemberGuard, CardMemberGuard, CardsService, CardsRepository, ColumnsService, BoardMemberGuard],
     exports: [BoardsRepository, BoardMemberGuard],
 })
 export class BoardsModule { }
