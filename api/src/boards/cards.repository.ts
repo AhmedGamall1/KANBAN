@@ -149,4 +149,72 @@ export class CardsRepository {
 
         return (rowCount ?? 0) > 0;
     }
+
+    async shiftWithinColumn(
+        columnId: string,
+        from: number,
+        to: number,
+        tx: Queryable,
+    ): Promise<number> {
+        const { rowCount } =
+            to < from
+                ? await tx.query(
+                    `UPDATE cards SET position = position + 1
+              WHERE column_id = $1 AND position >= $2 AND position < $3`,
+                    [columnId, to, from],
+                )
+                : await tx.query(
+                    `UPDATE cards SET position = position - 1
+              WHERE column_id = $1 AND position > $2 AND position <= $3`,
+                    [columnId, from, to],
+                );
+
+        return rowCount ?? 0;
+    }
+
+    async closeGap(
+        columnId: string,
+        position: number,
+        tx: Queryable,
+    ): Promise<number> {
+        const { rowCount } = await tx.query(
+            `UPDATE cards SET position = position - 1
+        WHERE column_id = $1 AND position > $2`,
+            [columnId, position],
+        );
+
+        return rowCount ?? 0;
+    }
+
+    async openGap(
+        columnId: string,
+        position: number,
+        tx: Queryable,
+    ): Promise<number> {
+        const { rowCount } = await tx.query(
+            `UPDATE cards SET position = position + 1
+        WHERE column_id = $1 AND position >= $2`,
+            [columnId, position],
+        );
+
+        return rowCount ?? 0;
+    }
+
+    async place(
+        cardId: string,
+        columnId: string,
+        position: number,
+        tx: Queryable,
+    ): Promise<Card | null> {
+        const { rows } = await tx.query<CardRow>(
+            `UPDATE cards c
+          SET column_id = co.id, position = $3
+         FROM columns co
+        WHERE c.id = $1 AND co.id = $2 AND co.board_id = c.board_id
+      RETURNING c.*`,
+            [cardId, columnId, position],
+        );
+
+        return rows[0] ? toCard(rows[0]) : null;
+    }
 }

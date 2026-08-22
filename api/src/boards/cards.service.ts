@@ -1,8 +1,9 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { CardsRepository, type Card } from './cards.repository';
 import type { CreateCardDto } from './dto/create-card.dto';
 import { UpdateCardDto } from './dto/update-card.dto';
+import { MoveCardDto } from './dto/move-card.dto';
 
 function isForeignKeyViolation(error: unknown): boolean {
     return (
@@ -14,6 +15,8 @@ function isForeignKeyViolation(error: unknown): boolean {
 }
 @Injectable()
 export class CardsService {
+    private readonly logger = new Logger(CardsService.name);
+
     constructor(
         private readonly db: DatabaseService,
         private readonly cards: CardsRepository,
@@ -62,5 +65,47 @@ export class CardsService {
         if (!(await this.cards.remove(cardId))) {
             throw new NotFoundException('Card not found');
         }
+    }
+
+
+    async move(cardId: string, dto: MoveCardDto): Promise<Card> {
+        return this.db.transaction(async (tx) => {
+            const card = await this.cards.findById(cardId, tx);
+
+            if (!card) {
+                throw new NotFoundException('Card not found');
+            }
+
+            let rewritten = 0;
+
+            if (dto.columnId === card.columnId) {
+                // same position - same column
+                if (dto.position === card.position) {
+                    return card;
+                }
+
+                // different position - same column
+                rewritten = await this.cards.shiftWithinColumn(
+                    card.columnId,
+                    card.position,
+                    dto.position,
+                    tx,
+                );
+            } else {
+                // different column
+                rewritten += await this.cards.closeGap(card.columnId, card.position, tx);
+                rewritten += await this.cards.openGap(dto.columnId, dto.position, tx);
+            }
+
+            const moved = await this.cards.place(cardId, dto.columnId, dto.position, tx);
+
+            if (!moved) {
+                throw new BadRequestException('Target column is not on this board');
+            }
+
+            this.logger.log(`Moved 1 card, rewrote ${rewritten} sibling rows`);
+
+            return moved;
+        });
     }
 }
