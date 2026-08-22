@@ -1,0 +1,1 @@
+ALTER TABLE cards ALTER COLUMN position TYPE numeric USING position::numeric;

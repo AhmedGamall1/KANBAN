@@ -13,6 +13,15 @@ function isForeignKeyViolation(error: unknown): boolean {
         error.code === '23503'
     );
 }
+
+function midpoint(prev: string | null, next: string | null): string {
+    if (prev === null && next === null) return '1';
+    if (prev === null) return String(Number(next) / 2);
+    if (next === null) return String(Number(prev) + 1);
+
+    return String((Number(prev) + Number(next)) / 2);
+}
+
 @Injectable()
 export class CardsService {
     private readonly logger = new Logger(CardsService.name);
@@ -76,34 +85,33 @@ export class CardsService {
                 throw new NotFoundException('Card not found');
             }
 
-            let rewritten = 0;
+            const prev = dto.prevCardId
+                ? await this.cards.findById(dto.prevCardId, tx)
+                : null;
+            const next = dto.nextCardId
+                ? await this.cards.findById(dto.nextCardId, tx)
+                : null;
 
-            if (dto.columnId === card.columnId) {
-                // same position - same column
-                if (dto.position === card.position) {
-                    return card;
-                }
-
-                // different position - same column
-                rewritten = await this.cards.shiftWithinColumn(
-                    card.columnId,
-                    card.position,
-                    dto.position,
-                    tx,
-                );
-            } else {
-                // different column
-                rewritten += await this.cards.closeGap(card.columnId, card.position, tx);
-                rewritten += await this.cards.openGap(dto.columnId, dto.position, tx);
+            if ((dto.prevCardId && !prev) || (dto.nextCardId && !next)) {
+                throw new BadRequestException('Neighbour card not found');
             }
 
-            const moved = await this.cards.place(cardId, dto.columnId, dto.position, tx);
+            if (
+                (prev && prev.columnId !== dto.columnId) ||
+                (next && next.columnId !== dto.columnId)
+            ) {
+                throw new BadRequestException('Neighbour is not in the target column');
+            }
+
+            const position = midpoint(prev?.position ?? null, next?.position ?? null);
+
+            const moved = await this.cards.place(cardId, dto.columnId, position, tx);
 
             if (!moved) {
                 throw new BadRequestException('Target column is not on this board');
             }
 
-            this.logger.log(`Moved 1 card, rewrote ${rewritten} sibling rows`);
+            this.logger.log(`Moved 1 card to position ${position}, rewrote 0 sibling rows`);
 
             return moved;
         });
