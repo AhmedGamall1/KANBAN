@@ -1,0 +1,1 @@
+ALTER TABLE columns ALTER COLUMN position TYPE numeric USING position::numeric;

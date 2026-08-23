@@ -6,7 +6,7 @@ export interface Column {
     id: string;
     boardId: string;
     name: string;
-    position: number;
+    position: string;
 }
 
 interface ColumnRow {
@@ -14,7 +14,7 @@ interface ColumnRow {
     workspace_id: string;
     board_id: string;
     name: string;
-    position: number;
+    position: string;
 }
 
 function toColumn(row: ColumnRow): Column {
@@ -39,18 +39,17 @@ export class ColumnsRepository {
         return rows.map(toColumn);
     }
 
-    async nextPosition(boardId: string, tx?: Queryable): Promise<number> {
-        const { rows } = await (tx ?? this.db).query<{ next: number }>(
-            `SELECT coalesce(max(position), 0) + 1 AS next
+    async nextPosition(boardId: string, tx?: Queryable): Promise<string> {
+        const { rows } = await (tx ?? this.db).query<{ next: string }>(
+            `SELECT (coalesce(max(position), 0) + 1)::text AS next
          FROM columns WHERE board_id = $1`,
             [boardId],
         );
 
         return rows[0].next;
     }
-
     async create(
-        input: { boardId: string; name: string; position: number },
+        input: { boardId: string; name: string; position: string },
         tx?: Queryable,
     ): Promise<Column> {
         const { rows } = await (tx ?? this.db).query<ColumnRow>(
@@ -90,33 +89,36 @@ export class ColumnsRepository {
         );
     }
 
-    async setPosition(id: string, position: number, tx?: Queryable): Promise<void> {
+    async setPosition(id: string, position: string, tx?: Queryable): Promise<void> {
         await (tx ?? this.db).query(
-            `UPDATE columns SET position = $2 WHERE id = $1`,
+            `UPDATE columns SET position = $2::numeric WHERE id = $1`,
             [id, position],
         );
     }
 
-    async shiftForMove(
-        boardId: string,
-        from: number,
-        to: number,
+    async midpointBetween(
+        prevId: string | null,
+        nextId: string | null,
         tx: Queryable,
-    ): Promise<number> {
-        const { rowCount } =
-            to < from
-                ? await tx.query(
-                    `UPDATE columns SET position = position + 1
-              WHERE board_id = $1 AND position >= $2 AND position < $3`,
-                    [boardId, to, from],
-                )
-                : await tx.query(
-                    `UPDATE columns SET position = position - 1
-              WHERE board_id = $1 AND position > $2 AND position <= $3`,
-                    [boardId, from, to],
-                );
+    ): Promise<string> {
+        const { rows } = await tx.query<{ position: string }>(
+            `SELECT (
+         CASE
+           WHEN prev IS NULL AND next IS NULL THEN 1
+           WHEN prev IS NULL THEN next / 2
+           WHEN next IS NULL THEN prev + 1
+           ELSE (prev + next) / 2
+         END
+       )::text AS position
+       FROM (
+         SELECT
+           (SELECT position FROM columns WHERE id = $1) AS prev,
+           (SELECT position FROM columns WHERE id = $2) AS next
+       ) AS neighbours`,
+            [prevId, nextId],
+        );
 
-        return rowCount ?? 0;
+        return rows[0].position;
     }
 
     async remove(id: string): Promise<boolean> {

@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { ColumnsRepository, type Column } from './columns.repository';
 import type { CreateColumnDto } from './dto/create-column.dto';
@@ -30,19 +30,34 @@ export class ColumnsService {
                 throw new NotFoundException('Column not found');
             }
 
-            if (dto.position !== undefined && dto.position !== column.position) {
-                const shifted = await this.columns.shiftForMove(
-                    column.boardId,
-                    column.position,
-                    dto.position,
+            if (dto.move) {
+                const { prevColumnId, nextColumnId } = dto.move;
+
+                const prev = prevColumnId
+                    ? await this.columns.findById(prevColumnId, tx)
+                    : null;
+                const next = nextColumnId
+                    ? await this.columns.findById(nextColumnId, tx)
+                    : null;
+
+                if ((prevColumnId && !prev) || (nextColumnId && !next)) {
+                    throw new BadRequestException('Neighbour column not found');
+                }
+
+                if (
+                    (prev && prev.boardId !== column.boardId) ||
+                    (next && next.boardId !== column.boardId)
+                ) {
+                    throw new BadRequestException('Neighbour is not on this board');
+                }
+
+                const position = await this.columns.midpointBetween(
+                    prevColumnId,
+                    nextColumnId,
                     tx,
                 );
 
-                await this.columns.setPosition(columnId, dto.position, tx);
-
-                this.logger.log(
-                    `Moved 1 column, rewrote ${shifted} sibling rows`,
-                );
+                await this.columns.setPosition(columnId, position, tx);
             }
 
             if (dto.name !== undefined) {
