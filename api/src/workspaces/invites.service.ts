@@ -7,6 +7,7 @@ import {
     WorkspacesRepository,
     type Workspace,
 } from './workspaces.repository';
+import { AccessRepository } from '../access/access.repository';
 
 @Injectable()
 export class InvitesService {
@@ -15,6 +16,7 @@ export class InvitesService {
         private readonly invites: InvitesRepository,
         private readonly workspaces: WorkspacesRepository,
         private readonly members: MembersRepository,
+        private readonly access: AccessRepository,
     ) { }
 
     async generateLink(workspaceId: string, userId: string): Promise<Invite> {
@@ -51,7 +53,7 @@ export class InvitesService {
         await this.members.addIfAbsent({ workspaceId, userId, role: 'member' });
 
         const workspace = await this.workspaces.findById(workspaceId);
-        const role = await this.members.findRole(workspaceId, userId);
+        const role = await this.access.roleFor('workspace', workspaceId, userId);
 
         if (!workspace || !role) {
             throw new NotFoundException('Workspace not found');

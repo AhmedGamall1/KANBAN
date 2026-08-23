@@ -10,13 +10,13 @@ import {
     UseGuards,
 } from '@nestjs/common';
 import { ZodValidationPipe } from '../common/zod-validation.pipe';
-import { Roles } from '../workspaces/roles.decorator';
-import { BoardMemberGuard } from './board-member.guard';
+import { Roles } from '../access/roles.decorator';
 import { BoardsService } from './boards.service';
 import { updateBoardSchema, type UpdateBoardDto } from './dto/update-board.dto';
+import { MemberGuard } from '../access/member.guard';
 
 @Controller('boards')
-@UseGuards(BoardMemberGuard)
+@UseGuards(MemberGuard('board'))
 export class BoardsController {
     constructor(private readonly boards: BoardsService) { }
 

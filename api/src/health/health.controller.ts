@@ -5,7 +5,7 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
-import { Public } from 'src/common/public.decorator';
+import { Public } from '../common/public.decorator';
 
 @Public()
 @Controller('health')

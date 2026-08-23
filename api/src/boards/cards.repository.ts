@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseService, type Queryable } from '../database/database.service';
-import { Role } from 'src/workspaces/members.repository';
+import type { Role } from '../access/access.repository';
 
 export type CardLabel = 'infra' | 'db' | 'frontend' | 'bug' | 'chore';
 
@@ -88,14 +88,6 @@ export class CardsRepository {
     }
 
 
-    async findRole(cardId: string, userId: string): Promise<Role | null> {
-        const { rows } = await this.db.query<{ role: Role | null }>(
-            `SELECT app_card_role($1, $2) AS role`,
-            [cardId, userId],
-        );
-
-        return rows[0]?.role ?? null;
-    }
 
     async findById(id: string, tx?: Queryable): Promise<Card | null> {
         const { rows } = await (tx ?? this.db).query<CardRow>(

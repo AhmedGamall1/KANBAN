@@ -15,11 +15,11 @@ import {
     type UpdateMemberRoleDto,
 } from './dto/update-member-role.dto';
 import { MembersService } from './members.service';
-import { Roles } from './roles.decorator';
-import { WorkspaceMemberGuard } from './workspace-member.guard';
+import { Roles } from '../access/roles.decorator';
+import { MemberGuard } from '../access/member.guard';
 
 @Controller('workspaces/:id/members')
-@UseGuards(WorkspaceMemberGuard)
+@UseGuards(MemberGuard("workspace"))
 export class MembersController {
     constructor(private readonly members: MembersService) { }
 

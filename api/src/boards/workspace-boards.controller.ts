@@ -7,13 +7,13 @@ import {
     UseGuards,
 } from '@nestjs/common';
 import { ZodValidationPipe } from '../common/zod-validation.pipe';
-import { Roles } from '../workspaces/roles.decorator';
-import { WorkspaceMemberGuard } from '../workspaces/workspace-member.guard';
+import { Roles } from '../access/roles.decorator';
 import { BoardsService } from './boards.service';
 import { createBoardSchema, type CreateBoardDto } from './dto/create-board.dto';
+import { MemberGuard } from '../access/member.guard';
 
 @Controller('workspaces/:id/boards')
-@UseGuards(WorkspaceMemberGuard)
+@UseGuards(MemberGuard('workspace'))
 export class WorkspaceBoardsController {
     constructor(private readonly boards: BoardsService) { }
 

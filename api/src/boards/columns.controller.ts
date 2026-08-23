@@ -9,16 +9,16 @@ import {
     UseGuards,
 } from '@nestjs/common';
 import { ZodValidationPipe } from '../common/zod-validation.pipe';
-import { Roles } from '../workspaces/roles.decorator';
-import { ColumnMemberGuard } from './column-member.guard';
+import { Roles } from '../access/roles.decorator';
 import { ColumnsService } from './columns.service';
 import {
     updateColumnSchema,
     type UpdateColumnDto,
 } from './dto/update-column.dto';
+import { MemberGuard } from '../access/member.guard';
 
 @Controller('columns')
-@UseGuards(ColumnMemberGuard)
+@UseGuards(MemberGuard("column"))
 export class ColumnsController {
     constructor(private readonly columns: ColumnsService) { }
 

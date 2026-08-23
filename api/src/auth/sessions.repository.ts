@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
-import { toUser, User, UserRow } from 'src/users/users.repository';
+import { toUser, User, UserRow } from '../users/users.repository';
 
 @Injectable()
 export class SessionsRepository {

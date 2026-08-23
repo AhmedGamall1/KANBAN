@@ -1,15 +1,15 @@
 import { Body, Controller, Param, Post, UseGuards } from '@nestjs/common';
 import { ZodValidationPipe } from '../common/zod-validation.pipe';
-import { Roles } from '../workspaces/roles.decorator';
-import { BoardMemberGuard } from './board-member.guard';
+import { Roles } from '../access/roles.decorator';
 import { ColumnsService } from './columns.service';
 import {
     createColumnSchema,
     type CreateColumnDto,
 } from './dto/create-column.dto';
+import { MemberGuard } from '../access/member.guard';
 
 @Controller('boards/:id/columns')
-@UseGuards(BoardMemberGuard)
+@UseGuards(MemberGuard('board'))
 export class BoardColumnsController {
     constructor(private readonly columns: ColumnsService) { }
 

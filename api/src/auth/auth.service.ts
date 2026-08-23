@@ -1,5 +1,5 @@
 import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
-import { type User, UsersRepository } from 'src/users/users.repository';
+import { type User, UsersRepository } from '../users/users.repository';
 import { SessionsRepository } from './sessions.repository';
 import { SignupDto } from './dto/signup.dto';
 import * as argon2 from 'argon2'

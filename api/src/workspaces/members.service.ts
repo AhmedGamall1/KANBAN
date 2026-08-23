@@ -2,6 +2,7 @@ import { ConflictException, Injectable, NotFoundException } from '@nestjs/common
 import { DatabaseService, type Queryable } from '../database/database.service';
 import { MembersRepository, type Member, type Role } from './members.repository';
 import { WorkspacesRepository } from './workspaces.repository';
+import { AccessRepository } from '../access/access.repository';
 
 @Injectable()
 export class MembersService {
@@ -9,6 +10,7 @@ export class MembersService {
         private readonly db: DatabaseService,
         private readonly workspaces: WorkspacesRepository,
         private readonly members: MembersRepository,
+        private readonly access: AccessRepository
     ) { }
 
     list(workspaceId: string): Promise<Member[]> {
@@ -55,7 +57,7 @@ export class MembersService {
         userId: string,
         tx: Queryable,
     ): Promise<void> {
-        const role = await this.members.findRole(workspaceId, userId, tx);
+        const role = await this.access.roleFor('workspace', workspaceId, userId, tx);
 
         if (role !== 'owner') {
             return;

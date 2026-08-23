@@ -9,14 +9,14 @@ import {
     UseGuards,
 } from '@nestjs/common';
 import { ZodValidationPipe } from '../common/zod-validation.pipe';
-import { Roles } from '../workspaces/roles.decorator';
-import { CardMemberGuard } from './card-member.guard';
+import { Roles } from '../access/roles.decorator';
 import { CardsService } from './cards.service';
 import { updateCardSchema, type UpdateCardDto } from './dto/update-card.dto';
 import { type MoveCardDto, moveCardSchema } from './dto/move-card.dto';
+import { MemberGuard } from '../access/member.guard';
 
 @Controller('cards')
-@UseGuards(CardMemberGuard)
+@UseGuards(MemberGuard('card'))
 export class CardsController {
     constructor(private readonly cards: CardsService) { }
 

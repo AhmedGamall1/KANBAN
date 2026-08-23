@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseService, type Queryable } from '../database/database.service';
-import type { Role } from '../workspaces/members.repository';
+import type { Role } from '../access/access.repository';
 
 export interface Board {
     id: string;
@@ -50,15 +50,6 @@ export class BoardsRepository {
         );
 
         return toBoard(rows[0]);
-    }
-
-    async findRole(boardId: string, userId: string): Promise<Role | null> {
-        const { rows } = await this.db.query<{ role: Role | null }>(
-            `SELECT app_board_role($1, $2) AS role`,
-            [boardId, userId],
-        );
-
-        return rows[0]?.role ?? null;
     }
 
     async findById(id: string): Promise<Board | null> {

@@ -11,8 +11,8 @@ import { CurrentUser } from '../common/current-user.decorator';
 import { ZodValidationPipe } from '../common/zod-validation.pipe';
 import type { User } from '../users/users.repository';
 import { InvitesService } from './invites.service';
-import { Roles } from './roles.decorator';
-import { WorkspaceMemberGuard } from './workspace-member.guard';
+import { Roles } from '../access/roles.decorator';
+import { MemberGuard } from '../access/member.guard';
 
 const tokenSchema = z.string().min(16).max(64);
 
@@ -21,7 +21,7 @@ export class InvitesController {
     constructor(private readonly invites: InvitesService) { }
 
     @Post('workspaces/:id/invite-link')
-    @UseGuards(WorkspaceMemberGuard)
+    @UseGuards(MemberGuard("workspace"))
     @Roles('owner')
     @HttpCode(HttpStatus.OK)
     async generate(

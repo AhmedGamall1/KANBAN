@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseService, type Queryable } from '../database/database.service';
+import type { Role } from '../access/access.repository';
 
-export type Role = 'owner' | 'member' | 'viewer';
+export type { Role };
 
 export interface Member {
     userId: string;
@@ -51,18 +52,6 @@ export class MembersRepository {
         );
     }
 
-    async findRole(
-        workspaceId: string,
-        userId: string,
-        tx?: Queryable,
-    ): Promise<Role | null> {
-        const { rows } = await (tx ?? this.db).query<{ role: Role | null }>(
-            `SELECT app_member_role($1, $2) AS role`,
-            [workspaceId, userId],
-        );
-
-        return rows[0]?.role ?? null;
-    }
 
     async list(workspaceId: string): Promise<Member[]> {
         const { rows } = await this.db.query<MemberRow>(

@@ -15,9 +15,9 @@ import type { Env } from '../config/env.validation';
 import { AuthService, SESSION_TTL_DAYS } from './auth.service';
 import { loginSchema, type LoginDto } from './dto/login.dto';
 import { signupSchema, type SignupDto } from './dto/signup.dto';
-import { CurrentUser } from 'src/common/current-user.decorator';
-import type { User } from 'src/users/users.repository';
-import { Public } from 'src/common/public.decorator';
+import { CurrentUser } from '../common/current-user.decorator';
+import type { User } from '../users/users.repository';
+import { Public } from '../common/public.decorator';
 
 @Controller('auth')
 export class AuthController {

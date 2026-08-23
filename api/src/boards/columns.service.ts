@@ -6,8 +6,6 @@ import { UpdateColumnDto } from './dto/update-column.dto';
 
 @Injectable()
 export class ColumnsService {
-    private readonly logger = new Logger(ColumnsService.name);
-
     constructor(
         private readonly db: DatabaseService,
         private readonly columns: ColumnsRepository,
