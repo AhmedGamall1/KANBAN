@@ -112,8 +112,8 @@ export class ColumnsRepository {
         return rows[0].position;
     }
 
-    async remove(id: string): Promise<boolean> {
-        const { rowCount } = await this.db.query(
+    async remove(id: string, tx?: Queryable): Promise<boolean> {
+        const { rowCount } = await (tx ?? this.db).query(
             `DELETE FROM columns WHERE id = $1`,
             [id],
         );
