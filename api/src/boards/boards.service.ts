@@ -1,8 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { BoardsRepository, type Board } from './boards.repository';
 import type { CreateBoardDto } from './dto/create-board.dto';
-import { Column, ColumnsRepository } from './columns.repository';
-import { Card, CardsRepository } from './cards.repository';
+import { Column, ColumnsRepository } from '../columns/columns.repository';
+import { Card, CardsRepository } from '../cards/cards.repository';
 
 @Injectable()
 export class BoardsService {

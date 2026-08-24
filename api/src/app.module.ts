@@ -8,6 +8,8 @@ import { WorkspacesModule } from './workspaces/workspaces.module';
 import { APP_FILTER } from '@nestjs/core';
 import { PostgresExceptionFilter } from './common/postgres-exception.filter';
 import { BoardsModule } from './boards/boards.module';
+import { ColumnsModule } from './columns/columns.module';
+import { CardsModule } from './cards/cards.module';
 
 @Module({
   imports: [
@@ -20,7 +22,9 @@ import { BoardsModule } from './boards/boards.module';
     HealthModule,
     AuthModule,
     WorkspacesModule,
-    BoardsModule
+    BoardsModule,
+    ColumnsModule,
+    CardsModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: PostgresExceptionFilter },

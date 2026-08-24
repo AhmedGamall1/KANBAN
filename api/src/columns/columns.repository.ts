@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseService, type Queryable } from '../database/database.service';
-import type { Role } from '../access/access.repository';
 
 export interface Column {
     id: string;
