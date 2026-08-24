@@ -132,8 +132,8 @@ export class CardsRepository {
         return rows[0] ? toCard(rows[0]) : null;
     }
 
-    async remove(id: string): Promise<boolean> {
-        const { rowCount } = await this.db.query(
+    async remove(id: string, tx?: Queryable): Promise<boolean> {
+        const { rowCount } = await (tx ?? this.db).query(
             `DELETE FROM cards WHERE id = $1`,
             [id],
         );

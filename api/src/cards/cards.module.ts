@@ -4,9 +4,10 @@ import { BoardCardsController } from './board-cards.controller';
 import { CardsController } from './cards.controller';
 import { CardsRepository } from './cards.repository';
 import { CardsService } from './cards.service';
+import { EventsModule } from 'src/events/events.module';
 
 @Module({
-    imports: [AccessModule],
+    imports: [AccessModule, EventsModule],
     controllers: [BoardCardsController, CardsController],
     providers: [CardsService, CardsRepository],
     exports: [CardsRepository],

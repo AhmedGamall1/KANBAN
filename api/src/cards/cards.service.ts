@@ -4,6 +4,7 @@ import { CardsRepository, type Card } from './cards.repository';
 import type { CreateCardDto } from './dto/create-card.dto';
 import { UpdateCardDto } from './dto/update-card.dto';
 import { MoveCardDto } from './dto/move-card.dto';
+import { EventsService } from 'src/events/events.service';
 
 function isForeignKeyViolation(error: unknown): boolean {
     return (
@@ -22,9 +23,10 @@ export class CardsService {
     constructor(
         private readonly db: DatabaseService,
         private readonly cards: CardsRepository,
+        private readonly events: EventsService
     ) { }
 
-    create(boardId: string, dto: CreateCardDto): Promise<Card> {
+    create(boardId: string, actorId: string, dto: CreateCardDto): Promise<Card> {
         return this.db.transaction(async (tx) => {
             const position = await this.cards.nextPosition(dto.columnId, tx);
 
@@ -37,40 +39,77 @@ export class CardsService {
                 throw new NotFoundException('Column not found on this board');
             }
 
+            await this.events.record(
+                { boardId, actorId, type: 'card_created', payload: { card } },
+                tx,
+            );
+
             return card;
         });
     }
 
-    async update(cardId: string, dto: UpdateCardDto): Promise<Card> {
-        let card: Card | null;
 
-        try {
-            card = await this.cards.update(cardId, dto);
-        } catch (error) {
-            if (isForeignKeyViolation(error)) {
-                throw new BadRequestException(
-                    'Assignee must be a member of this workspace',
-                );
+    async update(
+        cardId: string,
+        actorId: string,
+        dto: UpdateCardDto,
+    ): Promise<Card> {
+        return this.db.transaction(async (tx) => {
+            let card: Card | null;
+
+            try {
+                card = await this.cards.update(cardId, dto, tx);
+            } catch (error) {
+                if (isForeignKeyViolation(error)) {
+                    throw new BadRequestException(
+                        'Assignee must be a member of this workspace',
+                    );
+                }
+                throw error;
             }
 
-            throw error;
-        }
+            if (!card) {
+                throw new NotFoundException('Card not found');
+            }
 
-        if (!card) {
-            throw new NotFoundException('Card not found');
-        }
+            await this.events.record(
+                {
+                    boardId: card.boardId,
+                    actorId,
+                    type: 'card_updated',
+                    payload: { cardId, changes: dto },
+                },
+                tx,
+            );
 
-        return card;
+            return card;
+        });
     }
 
-    async remove(cardId: string): Promise<void> {
-        if (!(await this.cards.remove(cardId))) {
-            throw new NotFoundException('Card not found');
-        }
+    async remove(cardId: string, actorId: string): Promise<void> {
+        await this.db.transaction(async (tx) => {
+            const card = await this.cards.findById(cardId, tx);
+
+            if (!card) {
+                throw new NotFoundException('Card not found');
+            }
+
+            await this.cards.remove(cardId, tx);
+
+            await this.events.record(
+                {
+                    boardId: card.boardId,
+                    actorId,
+                    type: 'card_deleted',
+                    payload: { cardId, title: card.title },
+                },
+                tx,
+            );
+        });
     }
 
 
-    async move(cardId: string, dto: MoveCardDto): Promise<Card> {
+    async move(cardId: string, actorId: string, dto: MoveCardDto): Promise<Card> {
         return this.db.transaction(async (tx) => {
             const card = await this.cards.findById(cardId, tx);
 
@@ -109,7 +148,22 @@ export class CardsService {
 
             this.logger.log(`Moved 1 card to position ${position}, rewrote 0 sibling rows`);
 
+            await this.events.record(
+                {
+                    boardId: moved.boardId,
+                    actorId,
+                    type: 'card_moved',
+                    payload: {
+                        cardId,
+                        columnId: moved.columnId,
+                        position: moved.position,
+                    },
+                },
+                tx,
+            );
+
             return moved;
         });
     }
 }
+
