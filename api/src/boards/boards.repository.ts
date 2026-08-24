@@ -60,8 +60,12 @@ export class BoardsRepository {
         return rows[0] ? toBoard(rows[0]) : null;
     }
 
-    async rename(id: string, name: string): Promise<Board | null> {
-        const { rows } = await this.db.query<BoardRow>(
+    async rename(
+        id: string,
+        name: string,
+        tx?: Queryable,
+    ): Promise<Board | null> {
+        const { rows } = await (tx ?? this.db).query<BoardRow>(
             `UPDATE boards SET name = $2 WHERE id = $1 RETURNING *`,
             [id, name],
         );
