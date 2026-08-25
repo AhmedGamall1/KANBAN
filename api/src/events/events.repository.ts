@@ -71,4 +71,31 @@ export class EventsRepository {
 
         return toEvent(rows[0]);
     }
+
+    async currentSeq(boardId: string, tx?: Queryable): Promise<string> {
+        const { rows } = await (tx ?? this.db).query<{ seq: string }>(
+            `SELECT coalesce(max(seq), 0)::text AS seq
+         FROM board_events WHERE board_id = $1`,
+            [boardId],
+        );
+
+        return rows[0].seq;
+    }
+
+    async listAfter(
+        boardId: string,
+        after: string,
+        limit: number,
+        tx?: Queryable,
+    ): Promise<BoardEvent[]> {
+        const { rows } = await (tx ?? this.db).query<BoardEventRow>(
+            `SELECT * FROM board_events
+        WHERE board_id = $1 AND seq > $2::bigint
+        ORDER BY seq
+        LIMIT $3`,
+            [boardId, after, limit],
+        );
+
+        return rows.map(toEvent);
+    }
 }

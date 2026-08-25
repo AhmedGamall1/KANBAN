@@ -63,9 +63,12 @@ export class BoardsService {
     }
 
 
-    async getById(
-        id: string,
-    ): Promise<{ board: Board; columns: Column[]; cards: Card[] }> {
+    async getById(id: string): Promise<{
+        board: Board;
+        columns: Column[];
+        cards: Card[];
+        seq: string;
+    }> {
         const board = await this.boards.findById(id);
 
         if (!board) {
@@ -76,6 +79,7 @@ export class BoardsService {
             board,
             columns: await this.columns.listByBoard(id),
             cards: await this.cards.listByBoard(id),
+            seq: await this.events.currentSeq(id),
         };
     }
 
