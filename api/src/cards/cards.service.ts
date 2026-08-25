@@ -40,7 +40,7 @@ export class CardsService {
             }
 
             await this.events.record(
-                { boardId, actorId, type: 'card_created', payload: { card } },
+                { boardId, actorId, type: 'card_created', payload: { cardId: card.id, card } },
                 tx,
             );
 

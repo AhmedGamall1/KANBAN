@@ -1,0 +1,1 @@
+CREATE INDEX board_events_card_idx ON board_events ((payload->>'cardId'));

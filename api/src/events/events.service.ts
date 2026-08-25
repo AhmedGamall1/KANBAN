@@ -1,12 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import type { Queryable } from '../database/database.service';
 import {
+    ActivityEntry,
     EventsRepository,
     type BoardEvent,
     type EventType,
 } from './events.repository';
 
 const CATCH_UP_LIMIT = 500;
+const ACTIVITY_LIMIT = 100;
+
 @Injectable()
 export class EventsService {
     constructor(private readonly events: EventsRepository) { }
@@ -25,6 +28,11 @@ export class EventsService {
         return this.events.currentSeq(boardId, tx);
     }
 
+
+    activityForCard(cardId: string): Promise<ActivityEntry[]> {
+        return this.events.listForCard(cardId, ACTIVITY_LIMIT);
+    }
+
     async record(
         input: {
             boardId: string;
@@ -38,4 +46,5 @@ export class EventsService {
 
         return this.events.append(input, tx);
     }
+
 }

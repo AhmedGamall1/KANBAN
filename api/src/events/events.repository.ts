@@ -43,6 +43,19 @@ function toEvent(row: BoardEventRow): BoardEvent {
     };
 }
 
+export interface ActivityEntry {
+    seq: string;
+    type: EventType;
+    payload: Record<string, unknown>;
+    createdAt: Date;
+    actor: { id: string; name: string; avatarColor: string };
+}
+
+interface ActivityRow extends BoardEventRow {
+    actor_name: string;
+    actor_avatar_color: string;
+}
+
 @Injectable()
 export class EventsRepository {
     constructor(private readonly db: DatabaseService) { }
@@ -97,5 +110,32 @@ export class EventsRepository {
         );
 
         return rows.map(toEvent);
+    }
+
+    async listForCard(
+        cardId: string,
+        limit: number,
+    ): Promise<ActivityEntry[]> {
+        const { rows } = await this.db.query<ActivityRow>(
+            `SELECT e.*, u.name AS actor_name, u.avatar_color AS actor_avatar_color
+         FROM board_events e
+         JOIN users u ON u.id = e.actor_id
+        WHERE e.payload->>'cardId' = $1
+        ORDER BY e.seq DESC
+        LIMIT $2`,
+            [cardId, limit],
+        );
+
+        return rows.map((row) => ({
+            seq: row.seq,
+            type: row.type,
+            payload: row.payload,
+            createdAt: row.created_at,
+            actor: {
+                id: row.actor_id,
+                name: row.actor_name,
+                avatarColor: row.actor_avatar_color,
+            },
+        }));
     }
 }
