@@ -50,6 +50,36 @@ export class DatabaseService
     return this.pool.query<T>(text, params as unknown[]);
   }
 
+  async withUser<T>(
+    userId: string,
+    fn: (tx: Queryable) => Promise<T>,
+  ): Promise<T> {
+    const client = await this.pool.connect();
+
+    const tx: Queryable = {
+      query: <R extends QueryResultRow>(
+        text: string,
+        params?: readonly unknown[],
+      ) => client.query<R>(text, params as unknown[]),
+    };
+
+    try {
+      await client.query('BEGIN');
+      await client.query(`SELECT set_config('app.user_id', $1, true)`, [userId]);
+
+      const result = await requestContext.run({ tx }, () => fn(tx));
+
+      await client.query('COMMIT');
+
+      return result;
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
   async transaction<T>(fn: (tx: Queryable) => Promise<T>): Promise<T> {
     const store = requestContext.getStore();
 

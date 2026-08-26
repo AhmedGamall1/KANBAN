@@ -10,10 +10,20 @@ import { parseCookie } from 'cookie';
 import type { Server, Socket } from 'socket.io';
 import { AuthService } from '../auth/auth.service';
 import type { User } from '../users/users.repository';
+import { MessageBody, ConnectedSocket, SubscribeMessage } from '@nestjs/websockets';
+import { z } from 'zod';
+import { AccessRepository } from '../access/access.repository';
+import { DatabaseService } from '../database/database.service';
+import { EventsService } from '../events/events.service';
 
 export interface SocketData {
     user: User;
+    boardId?: string;
 }
+
+const boardRoom = (boardId: string): string => `board:${boardId}`;
+
+const joinSchema = z.object({ boardId: z.uuid() });
 
 export type AppSocket = Socket & { data: SocketData };
 
@@ -26,7 +36,12 @@ export class RealtimeGateway
     @WebSocketServer()
     server!: Server;
 
-    constructor(private readonly auth: AuthService) { }
+    constructor(
+        private readonly auth: AuthService,
+        private readonly access: AccessRepository,
+        private readonly events: EventsService,
+        private readonly db: DatabaseService,
+    ) { }
 
     afterInit(server: Server): void {
         // every connection need to pass this middleware to open
@@ -64,5 +79,55 @@ export class RealtimeGateway
         }
 
         socket.data.user = user;
+    }
+
+
+    @SubscribeMessage('board:join')
+    async handleJoin(
+        @ConnectedSocket() socket: AppSocket,
+        @MessageBody() body: unknown,
+    ): Promise<void> {
+        const parsed = joinSchema.safeParse(body);
+
+        if (!parsed.success) {
+            socket.emit('board:error', { message: 'boardId must be a uuid' });
+            return;
+        }
+
+        const { boardId } = parsed.data;
+        const userId = socket.data.user.id;
+
+        const role = await this.access.roleFor('board', boardId, userId);
+
+        if (!role) {
+            socket.emit('board:error', { message: 'Board not found' });
+            return;
+        }
+
+        if (socket.data.boardId && socket.data.boardId !== boardId) {
+            await socket.leave(boardRoom(socket.data.boardId));
+        }
+
+        await socket.join(boardRoom(boardId));
+        socket.data.boardId = boardId;
+
+        const seq = await this.db.withUser(userId, () =>
+            this.events.currentSeq(boardId),
+        );
+
+        socket.emit('board:state', { boardId, role, seq, presence: [] });
+
+        this.logger.log(`${socket.data.user.name} joined ${boardRoom(boardId)}`);
+    }
+
+    @SubscribeMessage('board:leave')
+    async handleLeave(@ConnectedSocket() socket: AppSocket): Promise<void> {
+        if (!socket.data.boardId) {
+            return;
+        }
+
+        await socket.leave(boardRoom(socket.data.boardId));
+        this.logger.log(`${socket.data.user.name} left ${boardRoom(socket.data.boardId)}`);
+        socket.data.boardId = undefined;
     }
 }
