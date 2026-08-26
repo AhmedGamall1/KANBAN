@@ -11,6 +11,7 @@ import { BoardsModule } from './boards/boards.module';
 import { ColumnsModule } from './columns/columns.module';
 import { CardsModule } from './cards/cards.module';
 import { EventsModule } from './events/events.module';
+import { RealtimeModule } from './realtime/realtime.module';
 
 @Module({
   imports: [
@@ -26,7 +27,8 @@ import { EventsModule } from './events/events.module';
     BoardsModule,
     ColumnsModule,
     CardsModule,
-    EventsModule
+    EventsModule,
+    RealtimeModule
   ],
   providers: [
     { provide: APP_FILTER, useClass: PostgresExceptionFilter },
