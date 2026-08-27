@@ -12,7 +12,7 @@ import { ColumnsModule } from './columns/columns.module';
 import { CardsModule } from './cards/cards.module';
 import { EventsModule } from './events/events.module';
 import { RealtimeModule } from './realtime/realtime.module';
-
+import { EventEmitterModule } from '@nestjs/event-emitter';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -28,7 +28,8 @@ import { RealtimeModule } from './realtime/realtime.module';
     ColumnsModule,
     CardsModule,
     EventsModule,
-    RealtimeModule
+    RealtimeModule,
+    EventEmitterModule.forRoot()
   ],
   providers: [
     { provide: APP_FILTER, useClass: PostgresExceptionFilter },

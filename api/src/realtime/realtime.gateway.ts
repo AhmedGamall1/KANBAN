@@ -15,6 +15,8 @@ import { z } from 'zod';
 import { AccessRepository } from '../access/access.repository';
 import { DatabaseService } from '../database/database.service';
 import { EventsService } from '../events/events.service';
+import { OnEvent } from '@nestjs/event-emitter';
+import type { BoardEvent } from '../events/events.repository';
 
 export interface SocketData {
     user: User;
@@ -129,5 +131,10 @@ export class RealtimeGateway
         await socket.leave(boardRoom(socket.data.boardId));
         this.logger.log(`${socket.data.user.name} left ${boardRoom(socket.data.boardId)}`);
         socket.data.boardId = undefined;
+    }
+
+    @OnEvent('board.event')
+    broadcast(event: BoardEvent): void {
+        this.server.to(boardRoom(event.boardId)).emit('board:event', event);
     }
 }

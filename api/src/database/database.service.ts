@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import type { Pool, QueryResult, QueryResultRow } from 'pg';
 import { PG_POOL } from './database.constants';
-import { requestContext } from './request-context';
+import { requestContext, RequestStore } from './request-context';
 
 export interface Queryable {
   query<T extends QueryResultRow>(
@@ -63,13 +63,19 @@ export class DatabaseService
       ) => client.query<R>(text, params as unknown[]),
     };
 
+    const store: RequestStore = { tx, afterCommit: [] };
+
     try {
       await client.query('BEGIN');
       await client.query(`SELECT set_config('app.user_id', $1, true)`, [userId]);
 
-      const result = await requestContext.run({ tx }, () => fn(tx));
+      const result = await requestContext.run(store, () => fn(tx));
 
       await client.query('COMMIT');
+
+      for (const callback of store.afterCommit) {
+        callback();
+      }
 
       return result;
     } catch (error) {
