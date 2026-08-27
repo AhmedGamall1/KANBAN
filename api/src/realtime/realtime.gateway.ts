@@ -23,6 +23,12 @@ export interface SocketData {
     boardId?: string;
 }
 
+export interface PresenceUser {
+    id: string;
+    name: string;
+    avatarColor: string;
+}
+
 const boardRoom = (boardId: string): string => `board:${boardId}`;
 
 const joinSchema = z.object({ boardId: z.uuid() });
@@ -61,10 +67,14 @@ export class RealtimeGateway
         this.logger.log(`Connected: ${socket.data.user.name} (${socket.id})`);
     }
 
-    handleDisconnect(socket: AppSocket): void {
-        this.logger.log(
-            `Disconnected: ${socket.data.user?.name ?? 'unknown'} (${socket.id})`,
-        );
+    async handleDisconnect(socket: AppSocket): Promise<void> {
+        const { boardId, user } = socket.data;
+
+        this.logger.log(`Disconnected: ${user?.name ?? 'unknown'} (${socket.id})`);
+
+        if (boardId) {
+            await this.broadcastPresence(boardId);
+        }
     }
 
     private async authenticate(socket: AppSocket): Promise<void> {
@@ -83,6 +93,31 @@ export class RealtimeGateway
         socket.data.user = user;
     }
 
+
+    private async presenceFor(boardId: string): Promise<PresenceUser[]> {
+        const sockets = await this.server.in(boardRoom(boardId)).fetchSockets();
+        const byUser = new Map<string, PresenceUser>();
+
+        for (const other of sockets) {
+            const { user } = other.data as SocketData;
+
+            if (user) {
+                byUser.set(user.id, {
+                    id: user.id,
+                    name: user.name,
+                    avatarColor: user.avatarColor,
+                });
+            }
+        }
+
+        return [...byUser.values()];
+    }
+
+    private async broadcastPresence(boardId: string): Promise<void> {
+        this.server.to(boardRoom(boardId)).emit('presence:update', {
+            users: await this.presenceFor(boardId),
+        });
+    }
 
     @SubscribeMessage('board:join')
     async handleJoin(
@@ -117,24 +152,40 @@ export class RealtimeGateway
             this.events.currentSeq(boardId),
         );
 
-        socket.emit('board:state', { boardId, role, seq, presence: [] });
+        socket.emit('board:state', {
+            boardId,
+            role,
+            seq,
+            presence: await this.presenceFor(boardId),
+        });
+
+        socket
+            .to(boardRoom(boardId))
+            .emit('presence:update', { users: await this.presenceFor(boardId) });
 
         this.logger.log(`${socket.data.user.name} joined ${boardRoom(boardId)}`);
     }
 
     @SubscribeMessage('board:leave')
     async handleLeave(@ConnectedSocket() socket: AppSocket): Promise<void> {
-        if (!socket.data.boardId) {
+        const { boardId } = socket.data;
+
+        if (!boardId) {
             return;
         }
 
-        await socket.leave(boardRoom(socket.data.boardId));
-        this.logger.log(`${socket.data.user.name} left ${boardRoom(socket.data.boardId)}`);
+        await socket.leave(boardRoom(boardId));
         socket.data.boardId = undefined;
+
+        await this.broadcastPresence(boardId);
+
+        this.logger.log(`${socket.data.user.name} left ${boardRoom(boardId)}`);
     }
 
     @OnEvent('board.event')
     broadcast(event: BoardEvent): void {
         this.server.to(boardRoom(event.boardId)).emit('board:event', event);
     }
+
+
 }
