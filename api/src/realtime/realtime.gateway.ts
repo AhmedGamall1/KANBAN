@@ -32,7 +32,10 @@ export interface PresenceUser {
 
 const boardRoom = (boardId: string): string => `board:${boardId}`;
 
-const joinSchema = z.object({ boardId: z.uuid() });
+const joinSchema = z.object({
+    boardId: z.uuid(),
+    after: z.string().regex(/^\d+$/).optional(),
+});
 
 const cursorSchema = z.object({
     x: z.number().min(0).max(1),
@@ -176,15 +179,20 @@ export class RealtimeGateway
         await socket.join(boardRoom(boardId));
         socket.data.boardId = boardId;
 
-        const seq = await this.db.withUser(userId, () =>
-            this.events.currentSeq(boardId),
-        );
+        const state = await this.db.withUser(userId, async () => ({
+            seq: await this.events.currentSeq(boardId),
+            catchUp: parsed.data.after
+                ? await this.events.since(boardId, parsed.data.after)
+                : null,
+        }));
 
         socket.emit('board:state', {
             boardId,
             role,
-            seq,
+            seq: state.seq,
             presence: await this.presenceFor(boardId),
+            missed: state.catchUp?.hasMore ? [] : (state.catchUp?.events ?? []),
+            resyncRequired: state.catchUp?.hasMore ?? false,
         });
 
         socket
