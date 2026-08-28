@@ -21,6 +21,7 @@ import type { BoardEvent } from '../events/events.repository';
 export interface SocketData {
     user: User;
     boardId?: string;
+    editingCardId?: string;
 }
 
 export interface PresenceUser {
@@ -32,6 +33,16 @@ export interface PresenceUser {
 const boardRoom = (boardId: string): string => `board:${boardId}`;
 
 const joinSchema = z.object({ boardId: z.uuid() });
+
+const cursorSchema = z.object({
+    x: z.number().min(0).max(1),
+    y: z.number().min(0).max(1),
+});
+
+const editingSchema = z.object({
+    cardId: z.uuid(),
+    editing: z.boolean(),
+});
 
 export type AppSocket = Socket & { data: SocketData };
 
@@ -73,6 +84,7 @@ export class RealtimeGateway
         this.logger.log(`Disconnected: ${user?.name ?? 'unknown'} (${socket.id})`);
 
         if (boardId) {
+            this.clearEditing(socket);
             await this.broadcastPresence(boardId);
         }
     }
@@ -117,6 +129,22 @@ export class RealtimeGateway
         this.server.to(boardRoom(boardId)).emit('presence:update', {
             users: await this.presenceFor(boardId),
         });
+    }
+
+    private clearEditing(socket: AppSocket): void {
+        const { boardId, user, editingCardId } = socket.data;
+
+        if (!boardId || !editingCardId) {
+            return;
+        }
+
+        this.server.to(boardRoom(boardId)).emit('card:editing', {
+            cardId: editingCardId,
+            userId: user.id,
+            editing: false,
+        });
+
+        socket.data.editingCardId = undefined;
     }
 
     @SubscribeMessage('board:join')
@@ -177,6 +205,8 @@ export class RealtimeGateway
         await socket.leave(boardRoom(boardId));
         socket.data.boardId = undefined;
 
+        this.clearEditing(socket);
+
         await this.broadcastPresence(boardId);
 
         this.logger.log(`${socket.data.user.name} left ${boardRoom(boardId)}`);
@@ -187,5 +217,56 @@ export class RealtimeGateway
         this.server.to(boardRoom(event.boardId)).emit('board:event', event);
     }
 
+    @SubscribeMessage('cursor:move')
+    handleCursor(
+        @ConnectedSocket() socket: AppSocket,
+        @MessageBody() body: unknown,
+    ): void {
+        const { boardId, user } = socket.data;
 
+        if (!boardId) {
+            return;
+        }
+
+        const parsed = cursorSchema.safeParse(body);
+
+        if (!parsed.success) {
+            return;
+        }
+
+        socket.to(boardRoom(boardId)).volatile.emit('cursor:update', {
+            userId: user.id,
+            x: parsed.data.x,
+            y: parsed.data.y,
+        });
+    }
+
+    @SubscribeMessage('card:editing')
+    handleEditing(
+        @ConnectedSocket() socket: AppSocket,
+        @MessageBody() body: unknown,
+    ): void {
+        const { boardId, user } = socket.data;
+
+        if (!boardId) {
+            return;
+        }
+
+        const parsed = editingSchema.safeParse(body);
+
+        if (!parsed.success) {
+            socket.emit('board:error', { message: 'cardId must be a uuid' });
+            return;
+        }
+
+        const { cardId, editing } = parsed.data;
+
+        socket.data.editingCardId = editing ? cardId : undefined;
+
+        socket.to(boardRoom(boardId)).emit('card:editing', {
+            cardId,
+            userId: user.id,
+            editing,
+        });
+    }
 }
