@@ -1,16 +1,27 @@
-import { Link } from 'react-router'
+import { Link } from "react-router";
+import { buttonClasses } from "@/components/ui/buttonStyles";
+import AuthLayout from "@/layouts/AuthLayout";
 
 export default function NotFoundPage() {
   return (
-    <div className="mx-auto max-w-3xl px-6 py-16">
-      <h1 className="text-xl font-medium">Page not found</h1>
-      <p className="mt-2 text-ink-muted">
-        That link does not lead anywhere.{' '}
-        <Link to="/workspaces" className="text-brand hover:underline">
-          Go to your workspaces
-        </Link>
-        .
-      </p>
-    </div>
-  )
+    <AuthLayout
+      title="Page not found"
+      subtitle="That link does not lead anywhere. It may have been renamed or deleted."
+      footer={
+        <>
+          Need to sign in again?{" "}
+          <Link to="/login" className="font-medium text-brand hover:underline">
+            Log in
+          </Link>
+        </>
+      }
+    >
+      <Link
+        to="/workspaces"
+        className={buttonClasses({ size: "lg", fullWidth: true })}
+      >
+        Go to your workspaces
+      </Link>
+    </AuthLayout>
+  );
 }

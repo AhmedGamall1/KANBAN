@@ -1,5 +1,4 @@
 interface LogoProps {
-  /** Render the mark on its own, without the wordmark next to it. */
   markOnly?: boolean;
 }
 

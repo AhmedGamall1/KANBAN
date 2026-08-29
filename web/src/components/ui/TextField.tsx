@@ -3,7 +3,6 @@ import type { InputHTMLAttributes } from 'react'
 
 interface TextFieldProps extends InputHTMLAttributes<HTMLInputElement> {
   label: string
-  /** Helper text under the field. Replaced by `error` when one is present. */
   hint?: string
   error?: string
 }
@@ -16,8 +15,6 @@ export default function TextField({
   className = '',
   ...props
 }: TextFieldProps) {
-  // useId keeps the label's htmlFor tied to its own input when the same field
-  // is rendered more than once on a page.
   const generatedId = useId()
   const inputId = id ?? generatedId
   const description = error ?? hint

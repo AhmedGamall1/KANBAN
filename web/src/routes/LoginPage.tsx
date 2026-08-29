@@ -1,11 +1,11 @@
-import type { FormEvent } from "react";
+import type { SubmitEvent } from "react";
 import { Link } from "react-router";
 import Button from "@/components/ui/Button";
 import TextField from "@/components/ui/TextField";
 import AuthLayout from "@/layouts/AuthLayout";
 
 export default function LoginPage() {
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
   }
 
