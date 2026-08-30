@@ -38,6 +38,7 @@ export const currentUser: User = {
 export const workspaces: Workspace[] = [
   { id: "acme", name: "Acme product", role: "owner" },
   { id: "opensource", name: "Open source", role: "member" },
+  { id: "design", name: "Design guild", role: "viewer" },
 ];
 
 export const boards: Board[] = [
@@ -45,6 +46,8 @@ export const boards: Board[] = [
   { id: "platform", workspaceId: "acme", name: "Platform migration" },
   { id: "triage", workspaceId: "acme", name: "Bug triage" },
   { id: "website", workspaceId: "opensource", name: "Website redesign" },
+  { id: "brand", workspaceId: "design", name: "Brand refresh" },
+  { id: "icons", workspaceId: "design", name: "Icon set" },
 ];
 
 export const members: Member[] = [
