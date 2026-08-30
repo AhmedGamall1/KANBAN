@@ -1,10 +1,10 @@
 import { Navigate, Route, Routes } from "react-router";
-import PagePlaceholder from "@/components/PagePlaceholder";
 import { workspaces } from "@/data/fixtures";
 import AppLayout from "@/layouts/AppLayout";
 import BoardPage from "@/routes/BoardPage";
 import BoardsPage from "@/routes/BoardsPage";
 import LoginPage from "@/routes/LoginPage";
+import MembersPage from "@/routes/MembersPage";
 import NotFoundPage from "@/routes/NotFoundPage";
 import SignupPage from "@/routes/SignupPage";
 
@@ -23,9 +23,7 @@ export default function App() {
         <Route path="/workspaces/:workspaceId" element={<BoardsPage />} />
         <Route
           path="/workspaces/:workspaceId/members"
-          element={
-            <PagePlaceholder title="Members" note="Built in slice 12d." />
-          }
+          element={<MembersPage />}
         />
         <Route path="/boards/:boardId" element={<BoardPage />} />
       </Route>

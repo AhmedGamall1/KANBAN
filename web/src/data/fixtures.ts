@@ -20,6 +20,7 @@ export interface Board {
 }
 
 export interface Member {
+  workspaceId: string;
   userId: string;
   name: string;
   email: string;
@@ -52,6 +53,7 @@ export const boards: Board[] = [
 
 export const members: Member[] = [
   {
+    workspaceId: "acme",
     userId: "user-sara",
     name: "Sara Malik",
     email: "sara@acme.io",
@@ -60,6 +62,7 @@ export const members: Member[] = [
     joinedAt: "2026-05-04",
   },
   {
+    workspaceId: "acme",
     userId: "user-omar",
     name: "Omar Haddad",
     email: "omar@acme.io",
@@ -68,6 +71,7 @@ export const members: Member[] = [
     joinedAt: "2026-05-19",
   },
   {
+    workspaceId: "acme",
     userId: "user-lena",
     name: "Lena Fischer",
     email: "lena@acme.io",
@@ -76,6 +80,7 @@ export const members: Member[] = [
     joinedAt: "2026-06-02",
   },
   {
+    workspaceId: "acme",
     userId: "user-tom",
     name: "Tom Reyes",
     email: "tom@acme.io",
@@ -83,4 +88,55 @@ export const members: Member[] = [
     role: "viewer",
     joinedAt: "2026-07-11",
   },
+  {
+    workspaceId: "opensource",
+    userId: "user-priya",
+    name: "Priya Nair",
+    email: "priya@opensource.dev",
+    avatarColor: "#65a30d",
+    role: "owner",
+    joinedAt: "2026-03-16",
+  },
+  {
+    workspaceId: "opensource",
+    userId: "user-sara",
+    name: "Sara Malik",
+    email: "sara@acme.io",
+    avatarColor: "#4f46e5",
+    role: "member",
+    joinedAt: "2026-04-28",
+  },
+  {
+    workspaceId: "opensource",
+    userId: "user-marco",
+    name: "Marco Rossi",
+    email: "marco@opensource.dev",
+    avatarColor: "#e11d48",
+    role: "member",
+    joinedAt: "2026-06-21",
+  },
+  {
+    workspaceId: "design",
+    userId: "user-elena",
+    name: "Elena Petrova",
+    email: "elena@designguild.co",
+    avatarColor: "#c026d3",
+    role: "owner",
+    joinedAt: "2026-02-09",
+  },
+  {
+    workspaceId: "design",
+    userId: "user-sara",
+    name: "Sara Malik",
+    email: "sara@acme.io",
+    avatarColor: "#4f46e5",
+    role: "viewer",
+    joinedAt: "2026-08-01",
+  },
 ];
+
+export const inviteLinks: Record<string, string> = {
+  acme: "http://localhost:5173/invite/k3f9qs2xva7m",
+  opensource: "http://localhost:5173/invite/p7wd4nc1ehzt",
+  design: "http://localhost:5173/invite/b2ym8rk6ju4q",
+};
