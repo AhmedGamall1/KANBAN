@@ -1,23 +1,7 @@
 import { NavLink, useParams } from "react-router";
+import WorkspaceSwitcher from "@/components/WorkspaceSwitcher";
 import Avatar from "@/components/ui/Avatar";
 import { boards, currentUser, workspaces } from "@/data/fixtures";
-
-function ChevronDownIcon() {
-  return (
-    <svg
-      className="h-4 w-4 shrink-0 text-ink-faint"
-      viewBox="0 0 16 16"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M4.5 6.5 8 10l3.5-3.5" />
-    </svg>
-  );
-}
 
 function BoardIcon() {
   return (
@@ -74,21 +58,7 @@ export default function Sidebar() {
 
   return (
     <aside className="flex w-64 shrink-0 flex-col border-r border-line bg-surface">
-      <button
-        type="button"
-        className="flex items-center gap-2 border-b border-line p-3 text-left transition-colors hover:bg-subtle"
-      >
-        <Avatar name={workspace.name} size="lg" shape="square" />
-        <span className="min-w-0 flex-1">
-          <span className="block truncate font-medium text-ink">
-            {workspace.name}
-          </span>
-          <span className="block text-xs capitalize text-ink-muted">
-            {workspace.role}
-          </span>
-        </span>
-        <ChevronDownIcon />
-      </button>
+      <WorkspaceSwitcher workspace={workspace} />
 
       <nav className="flex-1 overflow-y-auto p-3">
         <p className="px-2 pb-1.5 text-xs font-medium text-ink-faint">Boards</p>
