@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError, api } from "@/lib/api";
 
 export interface AuthUser {
@@ -37,4 +37,39 @@ export function useAuth() {
     isLoading: query.isPending,
     error: query.error,
   };
+}
+
+export function useLogin() {
+  const client = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: { email: string; password: string }) =>
+      api.post<{ user: AuthUser }>("/auth/login", input),
+    onSuccess: ({ user }) => {
+      client.setQueryData(meQueryKey, user);
+    },
+  });
+}
+
+export function useSignup() {
+  const client = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: { email: string; password: string; name: string }) =>
+      api.post<{ user: AuthUser }>("/auth/signup", input),
+    onSuccess: ({ user }) => {
+      client.setQueryData(meQueryKey, user);
+    },
+  });
+}
+
+export function useLogout() {
+  const client = useQueryClient();
+
+  return useMutation({
+    mutationFn: () => api.post<void>("/auth/logout"),
+    onSuccess: () => {
+      client.clear();
+    },
+  });
 }

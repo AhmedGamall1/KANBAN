@@ -1,8 +1,9 @@
-import { NavLink, useParams } from "react-router";
+import { NavLink, useNavigate, useParams } from "react-router";
+import { useAuth, useLogout } from "@/auth/useAuth";
 import WorkspaceSwitcher from "@/components/WorkspaceSwitcher";
 import Avatar from "@/components/ui/Avatar";
-import { BoardIcon, MembersIcon } from "@/components/ui/icons";
-import { boards, currentUser, workspaces } from "@/data/fixtures";
+import { BoardIcon, LogOutIcon, MembersIcon } from "@/components/ui/icons";
+import { boards, workspaces } from "@/data/fixtures";
 
 
 
@@ -16,6 +17,9 @@ function navLinkClasses({ isActive }: { isActive: boolean }): string {
 }
 
 export default function Sidebar() {
+  const { user } = useAuth();
+  const logout = useLogout();
+  const navigate = useNavigate();
   const { workspaceId, boardId } = useParams();
   const activeBoard = boards.find((board) => board.id === boardId);
   const activeId = workspaceId ?? activeBoard?.workspaceId;
@@ -54,17 +58,34 @@ export default function Sidebar() {
         </NavLink>
       </nav>
 
-      <div className="flex items-center gap-2 border-t border-line p-3">
-        <Avatar name={currentUser.name} color={currentUser.avatarColor} />
-        <span className="min-w-0 flex-1">
-          <span className="block truncate font-medium text-ink">
-            {currentUser.name}
+      {user && (
+        <div className="flex items-center gap-2 border-t border-line p-3">
+          <Avatar name={user.name} color={user.avatarColor} />
+          <span className="min-w-0 flex-1">
+            <span className="block truncate font-medium text-ink">
+              {user.name}
+            </span>
+            <span className="block truncate text-xs text-ink-muted">
+              {user.email}
+            </span>
           </span>
-          <span className="block truncate text-xs text-ink-muted">
-            {currentUser.email}
-          </span>
-        </span>
-      </div>
+
+          <button
+            type="button"
+            aria-label="Log out"
+            title="Log out"
+            disabled={logout.isPending}
+            onClick={() =>
+              logout.mutate(undefined, {
+                onSuccess: () => navigate("/login", { replace: true }),
+              })
+            }
+            className="rounded-control p-1.5 text-ink-faint transition-colors hover:bg-subtle hover:text-ink disabled:opacity-60"
+          >
+            <LogOutIcon />
+          </button>
+        </div>
+      )}
     </aside>
   );
 }
