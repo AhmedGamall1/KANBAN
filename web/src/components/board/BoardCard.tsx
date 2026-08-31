@@ -1,3 +1,4 @@
+import { useSortable } from "@dnd-kit/react/sortable";
 import Avatar from "@/components/ui/Avatar";
 import type { Card, CardLabel, Member } from "@/data/fixtures";
 
@@ -11,24 +12,42 @@ const labelDotClasses: Record<CardLabel, string> = {
 
 interface BoardCardProps {
   card: Card;
+  index: number;
+  columnId: string;
   assignee?: Member;
   editor?: Member;
+  canDrag: boolean;
   onOpen: () => void;
 }
 
 export default function BoardCard({
   card,
+  index,
+  columnId,
   assignee,
   editor,
+  canDrag,
   onOpen,
 }: BoardCardProps) {
+  const { ref, isDragging } = useSortable({
+    id: card.id,
+    index,
+    group: columnId,
+    type: "card",
+    accept: "card",
+    disabled: !canDrag,
+  });
+
   return (
     <button
+      ref={ref}
       type="button"
       onClick={onOpen}
       className={[
         "block w-full rounded-card border bg-surface p-3 text-left transition-colors",
         editor ? "border-brand" : "border-line hover:border-line-strong",
+        canDrag ? "cursor-grab active:cursor-grabbing" : "",
+        isDragging ? "opacity-40" : "",
       ].join(" ")}
     >
       {card.label && (

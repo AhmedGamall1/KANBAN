@@ -164,6 +164,7 @@ export interface Card {
 export const columns: Column[] = [
   { id: "col-backlog", boardId: "roadmap", name: "Backlog", position: "1" },
   { id: "col-progress", boardId: "roadmap", name: "In progress", position: "2" },
+  { id: "col-blocked", boardId: "roadmap", name: "Blocked", position: "2.5" },
   { id: "col-review", boardId: "roadmap", name: "In review", position: "3" },
   { id: "col-done", boardId: "roadmap", name: "Done", position: "4" },
   { id: "col-plat-todo", boardId: "platform", name: "To do", position: "1" },
