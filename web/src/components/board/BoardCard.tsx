@@ -12,11 +12,16 @@ const labelDotClasses: Record<CardLabel, string> = {
 interface BoardCardProps {
   card: Card;
   assignee?: Member;
+  onOpen: () => void;
 }
 
-export default function BoardCard({ card, assignee }: BoardCardProps) {
+export default function BoardCard({ card, assignee, onOpen }: BoardCardProps) {
   return (
-    <article className="rounded-card border border-line bg-surface p-3 transition-colors hover:border-line-strong">
+    <button
+      type="button"
+      onClick={onOpen}
+      className="block w-full rounded-card border border-line bg-surface p-3 text-left transition-colors hover:border-line-strong"
+    >
       {card.label && (
         <p className="mb-1.5 flex items-center gap-1.5 text-xs text-ink-muted">
           <span
@@ -33,6 +38,6 @@ export default function BoardCard({ card, assignee }: BoardCardProps) {
           <Avatar name={assignee.name} color={assignee.avatarColor} size="sm" />
         </div>
       )}
-    </article>
+    </button>
   );
 }

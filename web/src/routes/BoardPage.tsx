@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { useParams } from "react-router";
 import BoardColumn from "@/components/board/BoardColumn";
+import CardDrawer from "@/components/board/CardDrawer";
 import { PlusIcon } from "@/components/ui/icons";
 import {
   boards,
@@ -7,11 +9,13 @@ import {
   columns,
   members,
   workspaces,
+  type Column,
   type Member,
 } from "@/data/fixtures";
 
 export default function BoardPage() {
   const { boardId } = useParams();
+  const [openCardId, setOpenCardId] = useState<string | null>(null);
   const board = boards.find((item) => item.id === boardId);
 
   if (!board) {
@@ -28,13 +32,22 @@ export default function BoardPage() {
   const workspace = workspaces.find((item) => item.id === board.workspaceId);
   const canEdit = workspace?.role !== "viewer";
   const boardColumns = columns.filter((column) => column.boardId === board.id);
+  const boardMembers = members.filter(
+    (member) => member.workspaceId === board.workspaceId,
+  );
   const membersById: Record<string, Member> = {};
 
-  for (const member of members) {
-    if (member.workspaceId === board.workspaceId) {
-      membersById[member.userId] = member;
-    }
+  for (const member of boardMembers) {
+    membersById[member.userId] = member;
   }
+
+  const columnsById: Record<string, Column> = {};
+
+  for (const column of boardColumns) {
+    columnsById[column.id] = column;
+  }
+
+  const openCard = cards.find((card) => card.id === openCardId);
 
   return (
     <div className="flex h-full flex-col">
@@ -65,6 +78,7 @@ export default function BoardPage() {
                 cards={cards.filter((card) => card.columnId === column.id)}
                 membersById={membersById}
                 canEdit={canEdit}
+                onOpenCard={setOpenCardId}
               />
             ))}
 
@@ -79,6 +93,19 @@ export default function BoardPage() {
             )}
           </div>
         </div>
+      )}
+
+      {openCard && (
+        <CardDrawer
+          key={openCard.id}
+          card={openCard}
+          column={columnsById[openCard.columnId]}
+          columnsById={columnsById}
+          membersById={membersById}
+          boardMembers={boardMembers}
+          canEdit={canEdit}
+          onClose={() => setOpenCardId(null)}
+        />
       )}
     </div>
   );
