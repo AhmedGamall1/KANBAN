@@ -7,6 +7,7 @@ interface BoardColumnProps {
   cards: Card[];
   membersById: Record<string, Member>;
   canEdit: boolean;
+  editingCards: Record<string, string>;
   onOpenCard: (cardId: string) => void;
 }
 
@@ -15,6 +16,7 @@ export default function BoardColumn({
   cards,
   membersById,
   canEdit,
+  editingCards,
   onOpenCard,
 }: BoardColumnProps) {
   return (
@@ -34,6 +36,7 @@ export default function BoardColumn({
               assignee={
                 card.assigneeId ? membersById[card.assigneeId] : undefined
               }
+              editor={membersById[editingCards[card.id]]}
               onOpen={() => onOpenCard(card.id)}
             />
           </li>

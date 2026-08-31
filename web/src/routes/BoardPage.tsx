@@ -2,12 +2,15 @@ import { useState } from "react";
 import { useParams } from "react-router";
 import BoardColumn from "@/components/board/BoardColumn";
 import CardDrawer from "@/components/board/CardDrawer";
+import PresenceBar from "@/components/board/PresenceBar";
 import { PlusIcon } from "@/components/ui/icons";
 import {
   boards,
   cards,
   columns,
+  editingCards,
   members,
+  presence,
   workspaces,
   type Column,
   type Member,
@@ -52,9 +55,13 @@ export default function BoardPage() {
   return (
     <div className="flex h-full flex-col">
       <header className="flex shrink-0 items-center gap-4 border-b border-line bg-surface px-6 py-3">
-        <h1 className="min-w-0 truncate text-lg font-semibold tracking-tight text-ink">
+        <h1 className="min-w-0 flex-1 truncate text-lg font-semibold tracking-tight text-ink">
           {board.name}
         </h1>
+
+        <PresenceBar
+          users={presence.filter((user) => user.boardId === board.id)}
+        />
       </header>
 
       {boardColumns.length === 0 ? (
@@ -78,6 +85,7 @@ export default function BoardPage() {
                 cards={cards.filter((card) => card.columnId === column.id)}
                 membersById={membersById}
                 canEdit={canEdit}
+                editingCards={editingCards}
                 onOpenCard={setOpenCardId}
               />
             ))}
