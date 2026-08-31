@@ -1,41 +1,10 @@
 import { NavLink, useParams } from "react-router";
 import WorkspaceSwitcher from "@/components/WorkspaceSwitcher";
 import Avatar from "@/components/ui/Avatar";
+import { BoardIcon, MembersIcon } from "@/components/ui/icons";
 import { boards, currentUser, workspaces } from "@/data/fixtures";
 
-function BoardIcon() {
-  return (
-    <svg
-      className="h-4 w-4 shrink-0"
-      viewBox="0 0 16 16"
-      fill="currentColor"
-      aria-hidden="true"
-    >
-      <rect x="2" y="3" width="3.5" height="10" rx="1" />
-      <rect x="6.25" y="3" width="3.5" height="7" rx="1" />
-      <rect x="10.5" y="3" width="3.5" height="4.5" rx="1" />
-    </svg>
-  );
-}
 
-function MembersIcon() {
-  return (
-    <svg
-      className="h-4 w-4 shrink-0"
-      viewBox="0 0 16 16"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <circle cx="6" cy="5.5" r="2.5" />
-      <path d="M1.75 13.25a4.25 4.25 0 0 1 8.5 0" />
-      <path d="M10.5 3.2a2.5 2.5 0 0 1 0 4.6M11.5 9.4a4.25 4.25 0 0 1 2.75 3.85" />
-    </svg>
-  );
-}
 
 function navLinkClasses({ isActive }: { isActive: boolean }): string {
   return [

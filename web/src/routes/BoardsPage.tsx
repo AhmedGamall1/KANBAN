@@ -1,22 +1,9 @@
 import { Link, useParams } from "react-router";
 import PageHeader from "@/components/PageHeader";
 import Button from "@/components/ui/Button";
+import { BoardIcon } from "@/components/ui/icons";
 import { boards, workspaces } from "@/data/fixtures";
 
-function BoardIcon() {
-  return (
-    <svg
-      className="h-4 w-4"
-      viewBox="0 0 16 16"
-      fill="currentColor"
-      aria-hidden="true"
-    >
-      <rect x="2" y="3" width="3.5" height="10" rx="1" />
-      <rect x="6.25" y="3" width="3.5" height="7" rx="1" />
-      <rect x="10.5" y="3" width="3.5" height="4.5" rx="1" />
-    </svg>
-  );
-}
 
 export default function BoardsPage() {
   const { workspaceId } = useParams();

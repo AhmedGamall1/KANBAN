@@ -1,60 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import Avatar from "@/components/ui/Avatar";
+import {
+  CheckIcon,
+  ChevronDownIcon,
+  PlusIcon,
+} from "@/components/ui/icons";
 import type { Workspace } from "@/data/fixtures";
 import { workspaces } from "@/data/fixtures";
 
-function ChevronDownIcon({ open }: { open: boolean }) {
-  return (
-    <svg
-      className={`h-4 w-4 shrink-0 text-ink-faint transition-transform ${
-        open ? "rotate-180" : ""
-      }`}
-      viewBox="0 0 16 16"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M4.5 6.5 8 10l3.5-3.5" />
-    </svg>
-  );
-}
 
-function CheckIcon() {
-  return (
-    <svg
-      className="h-4 w-4 shrink-0 text-brand"
-      viewBox="0 0 16 16"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.75"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="m3.5 8.5 3 3 6-7" />
-    </svg>
-  );
-}
 
-function PlusIcon() {
-  return (
-    <svg
-      className="h-4 w-4 shrink-0"
-      viewBox="0 0 16 16"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      aria-hidden="true"
-    >
-      <path d="M8 3.5v9M3.5 8h9" />
-    </svg>
-  );
-}
 
 interface WorkspaceSwitcherProps {
   workspace: Workspace;
@@ -115,7 +71,11 @@ export default function WorkspaceSwitcher({
             {workspace.role}
           </span>
         </span>
-        <ChevronDownIcon open={open} />
+        <ChevronDownIcon
+          className={`h-4 w-4 shrink-0 text-ink-faint transition-transform ${
+            open ? "rotate-180" : ""
+          }`}
+        />
       </button>
 
       {open && (
@@ -139,7 +99,9 @@ export default function WorkspaceSwitcher({
                       {item.role}
                     </span>
                   </span>
-                  {item.id === workspace.id && <CheckIcon />}
+                  {item.id === workspace.id && (
+                    <CheckIcon className="h-4 w-4 shrink-0 text-brand" />
+                  )}
                 </button>
               </li>
             ))}
