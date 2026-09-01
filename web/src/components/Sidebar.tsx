@@ -3,7 +3,8 @@ import { useAuth, useLogout } from "@/auth/useAuth";
 import WorkspaceSwitcher from "@/components/WorkspaceSwitcher";
 import Avatar from "@/components/ui/Avatar";
 import { BoardIcon, LogOutIcon, MembersIcon } from "@/components/ui/icons";
-import { boards, workspaces } from "@/data/fixtures";
+import { boards } from "@/data/fixtures";
+import { useWorkspace } from "@/workspaces/useWorkspaces";
 
 
 
@@ -22,11 +23,9 @@ export default function Sidebar() {
   const navigate = useNavigate();
   const { workspaceId, boardId } = useParams();
   const activeBoard = boards.find((board) => board.id === boardId);
-  const activeId = workspaceId ?? activeBoard?.workspaceId;
-  const workspace =
-    workspaces.find((item) => item.id === activeId) ?? workspaces[0];
+  const { workspace } = useWorkspace(workspaceId ?? activeBoard?.workspaceId);
   const workspaceBoards = boards.filter(
-    (board) => board.workspaceId === workspace.id,
+    (board) => board.workspaceId === activeBoard?.workspaceId,
   );
 
   return (
@@ -49,13 +48,15 @@ export default function Sidebar() {
         <p className="px-2 pt-5 pb-1.5 text-xs font-medium text-ink-faint">
           Workspace
         </p>
-        <NavLink
-          to={`/workspaces/${workspace.id}/members`}
-          className={navLinkClasses}
-        >
-          <MembersIcon />
-          <span className="truncate">Members</span>
-        </NavLink>
+        {workspace && (
+          <NavLink
+            to={`/workspaces/${workspace.id}/members`}
+            className={navLinkClasses}
+          >
+            <MembersIcon />
+            <span className="truncate">Members</span>
+          </NavLink>
+        )}
       </nav>
 
       {user && (

@@ -6,19 +6,22 @@ import {
   ChevronDownIcon,
   PlusIcon,
 } from "@/components/ui/icons";
-import type { Workspace } from "@/data/fixtures";
-import { workspaces } from "@/data/fixtures";
+import {
+  useWorkspaces,
+  type Workspace,
+} from "@/workspaces/useWorkspaces";
 
 
 
 
 interface WorkspaceSwitcherProps {
-  workspace: Workspace;
+  workspace: Workspace | undefined;
 }
 
 export default function WorkspaceSwitcher({
   workspace,
 }: WorkspaceSwitcherProps) {
+  const { data: workspaces } = useWorkspaces();
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
@@ -62,13 +65,13 @@ export default function WorkspaceSwitcher({
         aria-expanded={open}
         className="flex w-full items-center gap-2 p-3 text-left transition-colors hover:bg-subtle"
       >
-        <Avatar name={workspace.name} size="lg" shape="square" />
+        <Avatar name={workspace?.name ?? "?"} size="lg" shape="square" />
         <span className="min-w-0 flex-1">
           <span className="block truncate font-medium text-ink">
-            {workspace.name}
+            {workspace?.name ?? "Loading…"}
           </span>
           <span className="block text-xs capitalize text-ink-muted">
-            {workspace.role}
+            {workspace?.role ?? ""}
           </span>
         </span>
         <ChevronDownIcon
@@ -85,7 +88,7 @@ export default function WorkspaceSwitcher({
           </p>
 
           <ul className="flex flex-col gap-0.5">
-            {workspaces.map((item) => (
+            {(workspaces ?? []).map((item) => (
               <li key={item.id}>
                 <button
                   type="button"
@@ -99,7 +102,7 @@ export default function WorkspaceSwitcher({
                       {item.role}
                     </span>
                   </span>
-                  {item.id === workspace.id && (
+                  {item.id === workspace?.id && (
                     <CheckIcon className="h-4 w-4 shrink-0 text-brand" />
                   )}
                 </button>

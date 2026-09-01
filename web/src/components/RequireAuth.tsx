@@ -1,5 +1,6 @@
 import { Navigate, Outlet, useLocation } from "react-router";
 import { useAuth } from "@/auth/useAuth";
+import Spinner from "@/components/ui/Spinner";
 
 export default function RequireAuth() {
   const { user, isLoading } = useAuth();
@@ -8,11 +9,7 @@ export default function RequireAuth() {
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <span
-          role="status"
-          aria-label="Loading"
-          className="h-6 w-6 animate-spin rounded-full border-2 border-line border-t-brand"
-        />
+        <Spinner />
       </div>
     );
   }
