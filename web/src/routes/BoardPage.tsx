@@ -1,66 +1,49 @@
 import { move } from "@dnd-kit/helpers";
 import { DragDropProvider } from "@dnd-kit/react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useParams } from "react-router";
+import { boardQueryKey, useBoard, type BoardData } from "@/boards/useBoard";
 import BoardColumn from "@/components/board/BoardColumn";
 import CardDrawer from "@/components/board/CardDrawer";
 import PresenceBar from "@/components/board/PresenceBar";
+import Spinner from "@/components/ui/Spinner";
 import { PlusIcon } from "@/components/ui/icons";
-import {
-  boards,
-  cards,
-  columns,
-  editingCards,
-  members,
-  presence,
-  workspaces,
-  type Board,
-  type Card,
-  type Column,
-  type Member,
-} from "@/data/fixtures";
+import { editingCards, members, presence, type Member } from "@/data/fixtures";
+import { useWorkspace } from "@/workspaces/useWorkspaces";
 
-function byPosition(a: { position: string }, b: { position: string }): number {
-  return Number(a.position) - Number(b.position);
-}
-
-function BoardView({ board }: { board: Board }) {
+export default function BoardPage() {
+  const { boardId } = useParams();
+  const queryClient = useQueryClient();
   const [openCardId, setOpenCardId] = useState<string | null>(null);
+  const { data, isPending, error } = useBoard(boardId);
+  const { workspace } = useWorkspace(data?.board.workspaceId);
 
-  const [columnOrder, setColumnOrder] = useState<string[]>(() =>
-    columns
-      .filter((column) => column.boardId === board.id)
-      .sort(byPosition)
-      .map((column) => column.id),
-  );
-
-  const [cardOrder, setCardOrder] = useState<Record<string, string[]>>(() => {
-    const order: Record<string, string[]> = {};
-
-    for (const column of columns.filter((item) => item.boardId === board.id)) {
-      order[column.id] = cards
-        .filter((card) => card.columnId === column.id)
-        .sort(byPosition)
-        .map((card) => card.id);
-    }
-
-    return order;
-  });
-
-  const columnsById: Record<string, Column> = {};
-
-  for (const column of columns) {
-    columnsById[column.id] = column;
+  if (isPending) {
+    return <Spinner />;
   }
 
-  const cardsById: Record<string, Card> = {};
-
-  for (const card of cards) {
-    cardsById[card.id] = card;
+  if (error || !data) {
+    return (
+      <div className="mx-auto max-w-3xl px-8 py-16 text-center">
+        <p className="font-medium text-ink">Board not found</p>
+        <p className="mt-1 text-ink-muted">
+          {error?.message ??
+            "It may have been deleted, or you no longer have access to it."}
+        </p>
+      </div>
+    );
   }
+
+  const canEdit = workspace ? workspace.role !== "viewer" : false;
+  const boardColumns = data.columnOrder.map((id) => data.columnsById[id]);
+  const openCard = openCardId ? data.cardsById[openCardId] : undefined;
+  const openCardColumnId = openCardId
+    ? data.columnOrder.find((id) => data.cardOrder[id]?.includes(openCardId))
+    : undefined;
 
   const boardMembers = members.filter(
-    (member) => member.workspaceId === board.workspaceId,
+    (member) => member.workspaceId === data.board.workspaceId,
   );
   const membersById: Record<string, Member> = {};
 
@@ -68,33 +51,35 @@ function BoardView({ board }: { board: Board }) {
     membersById[member.userId] = member;
   }
 
-  const workspace = workspaces.find((item) => item.id === board.workspaceId);
-  const canEdit = workspace?.role !== "viewer";
-  const boardColumns = columnOrder.map((columnId) => columnsById[columnId]);
-  const openCard = openCardId ? cardsById[openCardId] : undefined;
-  const openCardColumnId = openCardId
-    ? columnOrder.find((columnId) => cardOrder[columnId]?.includes(openCardId))
-    : undefined;
+  function reorder(event: Parameters<typeof move>[1], kind: string) {
+    queryClient.setQueryData<BoardData>(
+      boardQueryKey(boardId ?? ""),
+      (previous) => {
+        if (!previous) {
+          return previous;
+        }
+
+        return kind === "column"
+          ? { ...previous, columnOrder: move(previous.columnOrder, event) }
+          : { ...previous, cardOrder: move(previous.cardOrder, event) };
+      },
+    );
+  }
 
   return (
     <DragDropProvider
       onDragOver={(event) => {
-        if (event.operation.source?.type === "column") {
-          setColumnOrder((order) => move(order, event));
-          return;
-        }
-
-        setCardOrder((order) => move(order, event));
+        reorder(event, String(event.operation.source?.type ?? "card"));
       }}
     >
       <div className="flex h-full flex-col">
         <header className="flex shrink-0 items-center gap-4 border-b border-line bg-surface px-6 py-3">
           <h1 className="min-w-0 flex-1 truncate text-lg font-semibold tracking-tight text-ink">
-            {board.name}
+            {data.board.name}
           </h1>
 
           <PresenceBar
-            users={presence.filter((user) => user.boardId === board.id)}
+            users={presence.filter((user) => user.boardId === data.board.id)}
           />
         </header>
 
@@ -117,8 +102,8 @@ function BoardView({ board }: { board: Board }) {
                   key={column.id}
                   column={column}
                   index={columnIndex}
-                  cards={(cardOrder[column.id] ?? []).map(
-                    (cardId) => cardsById[cardId],
+                  cards={(data.cardOrder[column.id] ?? []).map(
+                    (cardId) => data.cardsById[cardId],
                   )}
                   membersById={membersById}
                   canEdit={canEdit}
@@ -145,9 +130,9 @@ function BoardView({ board }: { board: Board }) {
             key={openCard.id}
             card={openCard}
             column={
-              openCardColumnId ? columnsById[openCardColumnId] : undefined
+              openCardColumnId ? data.columnsById[openCardColumnId] : undefined
             }
-            columnsById={columnsById}
+            columnsById={data.columnsById}
             membersById={membersById}
             boardMembers={boardMembers}
             canEdit={canEdit}
@@ -157,22 +142,4 @@ function BoardView({ board }: { board: Board }) {
       </div>
     </DragDropProvider>
   );
-}
-
-export default function BoardPage() {
-  const { boardId } = useParams();
-  const board = boards.find((item) => item.id === boardId);
-
-  if (!board) {
-    return (
-      <div className="mx-auto max-w-3xl px-8 py-16 text-center">
-        <p className="font-medium text-ink">Board not found</p>
-        <p className="mt-1 text-ink-muted">
-          It may have been deleted, or you no longer have access to it.
-        </p>
-      </div>
-    );
-  }
-
-  return <BoardView key={board.id} board={board} />;
 }

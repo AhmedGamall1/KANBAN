@@ -3,7 +3,8 @@ import { useAuth, useLogout } from "@/auth/useAuth";
 import WorkspaceSwitcher from "@/components/WorkspaceSwitcher";
 import Avatar from "@/components/ui/Avatar";
 import { BoardIcon, LogOutIcon, MembersIcon } from "@/components/ui/icons";
-import { boards } from "@/data/fixtures";
+import { useBoard } from "@/boards/useBoard";
+import { useBoards } from "@/boards/useBoards";
 import { useWorkspace } from "@/workspaces/useWorkspaces";
 
 
@@ -22,11 +23,11 @@ export default function Sidebar() {
   const logout = useLogout();
   const navigate = useNavigate();
   const { workspaceId, boardId } = useParams();
-  const activeBoard = boards.find((board) => board.id === boardId);
-  const { workspace } = useWorkspace(workspaceId ?? activeBoard?.workspaceId);
-  const workspaceBoards = boards.filter(
-    (board) => board.workspaceId === activeBoard?.workspaceId,
+  const { data: activeBoard } = useBoard(boardId);
+  const { workspace } = useWorkspace(
+    workspaceId ?? activeBoard?.board.workspaceId,
   );
+  const { data: workspaceBoards } = useBoards(workspace?.id);
 
   return (
     <aside className="flex w-64 shrink-0 flex-col border-r border-line bg-surface">
@@ -35,7 +36,7 @@ export default function Sidebar() {
       <nav className="flex-1 overflow-y-auto p-3">
         <p className="px-2 pb-1.5 text-xs font-medium text-ink-faint">Boards</p>
         <ul className="flex flex-col gap-0.5">
-          {workspaceBoards.map((board) => (
+          {(workspaceBoards ?? []).map((board) => (
             <li key={board.id}>
               <NavLink to={`/boards/${board.id}`} className={navLinkClasses}>
                 <BoardIcon />

@@ -3,13 +3,11 @@ import Avatar from "@/components/ui/Avatar";
 import Button from "@/components/ui/Button";
 import Select from "@/components/ui/Select";
 import { CloseIcon } from "@/components/ui/icons";
+import type { Card, CardLabel, Column } from "@/boards/useBoard";
 import {
   activity,
   type ActivityEntry,
-  type Card,
   type CardChanges,
-  type CardLabel,
-  type Column,
   type Member,
 } from "@/data/fixtures";
 import { relativeTime } from "@/lib/relativeTime";

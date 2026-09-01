@@ -1,17 +1,35 @@
 import { Link, useParams } from "react-router";
+import { useBoards } from "@/boards/useBoards";
 import PageHeader from "@/components/PageHeader";
 import Button from "@/components/ui/Button";
+import Spinner from "@/components/ui/Spinner";
 import { BoardIcon } from "@/components/ui/icons";
-import { boards, workspaces } from "@/data/fixtures";
-
+import { useWorkspace } from "@/workspaces/useWorkspaces";
 
 export default function BoardsPage() {
   const { workspaceId } = useParams();
-  const workspace =
-    workspaces.find((item) => item.id === workspaceId) ?? workspaces[0];
-  const workspaceBoards = boards.filter(
-    (board) => board.workspaceId === workspace.id,
-  );
+  const { workspace, isPending: workspacePending } = useWorkspace(workspaceId);
+  const {
+    data: boards,
+    isPending: boardsPending,
+    error,
+  } = useBoards(workspaceId);
+
+  if (workspacePending || boardsPending) {
+    return <Spinner />;
+  }
+
+  if (!workspace) {
+    return (
+      <div className="mx-auto max-w-3xl px-8 py-16 text-center">
+        <p className="font-medium text-ink">Workspace not found</p>
+        <p className="mt-1 text-ink-muted">
+          It may have been deleted, or you are no longer a member of it.
+        </p>
+      </div>
+    );
+  }
+
   const canEdit = workspace.role !== "viewer";
 
   return (
@@ -22,7 +40,12 @@ export default function BoardsPage() {
         action={canEdit ? <Button>New board</Button> : undefined}
       />
 
-      {workspaceBoards.length === 0 ? (
+      {error ? (
+        <div className="mt-6 rounded-card border border-line bg-surface px-6 py-12 text-center">
+          <p className="font-medium text-ink">Could not load boards</p>
+          <p className="mt-1 text-ink-muted">{error.message}</p>
+        </div>
+      ) : boards.length === 0 ? (
         <div className="mt-6 rounded-card border border-dashed border-line-strong px-6 py-12 text-center">
           <p className="font-medium text-ink">No boards yet</p>
           <p className="mt-1 text-ink-muted">
@@ -33,7 +56,7 @@ export default function BoardsPage() {
         </div>
       ) : (
         <ul className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {workspaceBoards.map((board) => (
+          {boards.map((board) => (
             <li key={board.id}>
               <Link
                 to={`/boards/${board.id}`}

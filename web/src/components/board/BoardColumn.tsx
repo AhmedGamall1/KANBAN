@@ -2,7 +2,8 @@ import { CollisionPriority } from "@dnd-kit/abstract";
 import { useSortable } from "@dnd-kit/react/sortable";
 import BoardCard from "@/components/board/BoardCard";
 import { PlusIcon } from "@/components/ui/icons";
-import type { Card, Column, Member } from "@/data/fixtures";
+import type { Card, Column } from "@/boards/useBoard";
+import type { Member } from "@/data/fixtures";
 
 interface BoardColumnProps {
   column: Column;

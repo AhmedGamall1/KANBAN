@@ -1,6 +1,7 @@
 import { useSortable } from "@dnd-kit/react/sortable";
 import Avatar from "@/components/ui/Avatar";
-import type { Card, CardLabel, Member } from "@/data/fixtures";
+import type { Card, CardLabel } from "@/boards/useBoard";
+import type { Member } from "@/data/fixtures";
 
 const labelDotClasses: Record<CardLabel, string> = {
   infra: "bg-label-infra",
