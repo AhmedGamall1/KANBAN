@@ -4,13 +4,9 @@ import Button from "@/components/ui/Button";
 import Select from "@/components/ui/Select";
 import { CloseIcon } from "@/components/ui/icons";
 import type { Card, CardLabel, Column } from "@/boards/useBoard";
-import {
-  activity,
-  type ActivityEntry,
-  type CardChanges,
-  type Member,
-} from "@/data/fixtures";
+import { activity, type ActivityEntry, type CardChanges } from "@/data/fixtures";
 import { relativeTime } from "@/lib/relativeTime";
+import type { Member } from "@/workspaces/useMembers";
 
 const LABELS: CardLabel[] = ["infra", "db", "frontend", "bug", "chore"];
 

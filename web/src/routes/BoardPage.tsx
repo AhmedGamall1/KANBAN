@@ -9,7 +9,8 @@ import CardDrawer from "@/components/board/CardDrawer";
 import PresenceBar from "@/components/board/PresenceBar";
 import Spinner from "@/components/ui/Spinner";
 import { PlusIcon } from "@/components/ui/icons";
-import { editingCards, members, presence, type Member } from "@/data/fixtures";
+import { editingCards, presence } from "@/data/fixtures";
+import { useMembers, type Member } from "@/workspaces/useMembers";
 import { useWorkspace } from "@/workspaces/useWorkspaces";
 
 export default function BoardPage() {
@@ -18,6 +19,7 @@ export default function BoardPage() {
   const [openCardId, setOpenCardId] = useState<string | null>(null);
   const { data, isPending, error } = useBoard(boardId);
   const { workspace } = useWorkspace(data?.board.workspaceId);
+  const { data: boardMembers } = useMembers(data?.board.workspaceId);
 
   if (isPending) {
     return <Spinner />;
@@ -36,18 +38,18 @@ export default function BoardPage() {
   }
 
   const canEdit = workspace ? workspace.role !== "viewer" : false;
+
   const boardColumns = data.columnOrder.map((id) => data.columnsById[id]);
+
   const openCard = openCardId ? data.cardsById[openCardId] : undefined;
+
   const openCardColumnId = openCardId
     ? data.columnOrder.find((id) => data.cardOrder[id]?.includes(openCardId))
     : undefined;
 
-  const boardMembers = members.filter(
-    (member) => member.workspaceId === data.board.workspaceId,
-  );
   const membersById: Record<string, Member> = {};
 
-  for (const member of boardMembers) {
+  for (const member of boardMembers ?? []) {
     membersById[member.userId] = member;
   }
 
@@ -134,7 +136,7 @@ export default function BoardPage() {
             }
             columnsById={data.columnsById}
             membersById={membersById}
-            boardMembers={boardMembers}
+            boardMembers={boardMembers ?? []}
             canEdit={canEdit}
             onClose={() => setOpenCardId(null)}
           />
