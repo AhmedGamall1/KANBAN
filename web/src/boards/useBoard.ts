@@ -1,6 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { boardsQueryKey, type Board } from "@/boards/useBoards";
 import { api } from "@/lib/api";
-import type { Board } from "@/boards/useBoards";
 
 export type CardLabel = "infra" | "db" | "frontend" | "bug" | "chore";
 
@@ -72,6 +72,47 @@ export function normalizeBoard(response: BoardResponse): BoardData {
     cardOrder,
     seq: response.seq,
   };
+}
+
+export function useRenameBoard(
+  boardId: string,
+  workspaceId: string | undefined,
+) {
+  const client = useQueryClient();
+
+  return useMutation({
+    mutationFn: (name: string) =>
+      api.patch<{ board: Board }>(`/boards/${boardId}`, { name }),
+    onSuccess: () => {
+      void client.invalidateQueries({ queryKey: boardQueryKey(boardId) });
+
+      if (workspaceId) {
+        void client.invalidateQueries({
+          queryKey: boardsQueryKey(workspaceId),
+        });
+      }
+    },
+  });
+}
+
+export function useDeleteBoard(
+  boardId: string,
+  workspaceId: string | undefined,
+) {
+  const client = useQueryClient();
+
+  return useMutation({
+    mutationFn: () => api.delete<void>(`/boards/${boardId}`),
+    onSuccess: () => {
+      client.removeQueries({ queryKey: boardQueryKey(boardId) });
+
+      if (workspaceId) {
+        void client.invalidateQueries({
+          queryKey: boardsQueryKey(workspaceId),
+        });
+      }
+    },
+  });
 }
 
 export function useBoard(boardId: string | undefined) {

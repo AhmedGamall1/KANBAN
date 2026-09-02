@@ -102,6 +102,41 @@ export function MembersIcon({ className = "h-4 w-4 shrink-0" }: IconProps) {
   );
 }
 
+export function PencilIcon({ className = "h-4 w-4 shrink-0" }: IconProps) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M11.25 2.75a1.77 1.77 0 0 1 2.5 2.5L5.5 13.5l-3.25.75.75-3.25z" />
+    </svg>
+  );
+}
+
+export function TrashIcon({ className = "h-4 w-4 shrink-0" }: IconProps) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M2.75 4.25h10.5M6.25 4.25V2.75h3.5v1.5" />
+      <path d="M4.25 4.25 5 13.25h6l.75-9M6.75 7v3.5M9.25 7v3.5" />
+    </svg>
+  );
+}
+
 export function LogOutIcon({ className = "h-4 w-4 shrink-0" }: IconProps) {
   return (
     <svg
