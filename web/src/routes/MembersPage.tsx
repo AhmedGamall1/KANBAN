@@ -4,10 +4,17 @@ import { useAuth } from "@/auth/useAuth";
 import PageHeader from "@/components/PageHeader";
 import Avatar from "@/components/ui/Avatar";
 import Button from "@/components/ui/Button";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import Select from "@/components/ui/Select";
 import Spinner from "@/components/ui/Spinner";
 import { inviteLinks } from "@/data/fixtures";
-import { useMembers } from "@/workspaces/useMembers";
+import { ApiError } from "@/lib/api";
+import {
+  useMembers,
+  useRemoveMember,
+  useUpdateMemberRole,
+  type Member,
+} from "@/workspaces/useMembers";
 import { useWorkspace, type Role } from "@/workspaces/useWorkspaces";
 
 const ROLES: Role[] = ["owner", "member", "viewer"];
@@ -58,12 +65,15 @@ function InviteLink({ link }: { link: string }) {
 export default function MembersPage() {
   const { workspaceId } = useParams();
   const { user } = useAuth();
+  const [removing, setRemoving] = useState<Member | null>(null);
   const { workspace, isPending: workspacePending } = useWorkspace(workspaceId);
   const {
     data: members,
     isPending: membersPending,
     error,
   } = useMembers(workspaceId);
+  const updateRole = useUpdateMemberRole(workspaceId ?? "");
+  const removeMember = useRemoveMember(workspaceId ?? "");
 
   if (workspacePending || membersPending) {
     return <Spinner />;
@@ -126,7 +136,14 @@ export default function MembersPage() {
                     <Select
                       label={`Role for ${member.name}`}
                       labelHidden
-                      defaultValue={member.role}
+                      value={member.role}
+                      disabled={updateRole.isPending}
+                      onChange={(event) =>
+                        updateRole.mutate({
+                          userId: member.userId,
+                          role: event.target.value as Role,
+                        })
+                      }
                     >
                       {ROLES.map((role) => (
                         <option key={role} value={role}>
@@ -134,7 +151,14 @@ export default function MembersPage() {
                         </option>
                       ))}
                     </Select>
-                    <Button variant="ghost" size="sm">
+                    <Button
+                      variant="danger-ghost"
+                      size="sm"
+                      onClick={() => {
+                        removeMember.reset();
+                        setRemoving(member);
+                      }}
+                    >
                       Remove
                     </Button>
                   </div>
@@ -147,6 +171,32 @@ export default function MembersPage() {
             );
           })}
         </ul>
+      )}
+
+      {updateRole.error instanceof ApiError && (
+        <p className="mt-4 rounded-control bg-danger-soft px-2.5 py-2 text-sm text-danger">
+          {updateRole.error.message}
+        </p>
+      )}
+
+      {removing && (
+        <ConfirmDialog
+          title="Remove member"
+          body={`${removing.name} will lose access to ${workspace.name} and every board in it.`}
+          confirmLabel="Remove member"
+          pending={removeMember.isPending}
+          error={
+            removeMember.error instanceof ApiError
+              ? removeMember.error.message
+              : undefined
+          }
+          onClose={() => setRemoving(null)}
+          onConfirm={() =>
+            removeMember.mutate(removing.userId, {
+              onSuccess: () => setRemoving(null),
+            })
+          }
+        />
       )}
     </div>
   );
