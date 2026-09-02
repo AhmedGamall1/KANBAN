@@ -1,13 +1,19 @@
-import { Link, useParams } from "react-router";
-import { useBoards } from "@/boards/useBoards";
+import { useState } from "react";
+import { Link, useNavigate, useParams } from "react-router";
+import { useBoards, useCreateBoard } from "@/boards/useBoards";
 import PageHeader from "@/components/PageHeader";
 import Button from "@/components/ui/Button";
+import NameDialog from "@/components/ui/NameDialog";
 import Spinner from "@/components/ui/Spinner";
 import { BoardIcon } from "@/components/ui/icons";
+import { ApiError } from "@/lib/api";
 import { useWorkspace } from "@/workspaces/useWorkspaces";
 
 export default function BoardsPage() {
   const { workspaceId } = useParams();
+  const navigate = useNavigate();
+  const [creating, setCreating] = useState(false);
+  const createBoard = useCreateBoard(workspaceId ?? "");
   const { workspace, isPending: workspacePending } = useWorkspace(workspaceId);
   const {
     data: boards,
@@ -37,7 +43,18 @@ export default function BoardsPage() {
       <PageHeader
         title="Boards"
         description={`Every board in ${workspace.name}.`}
-        action={canEdit ? <Button>New board</Button> : undefined}
+        action={
+          canEdit ? (
+            <Button
+              onClick={() => {
+                createBoard.reset();
+                setCreating(true);
+              }}
+            >
+              New board
+            </Button>
+          ) : undefined
+        }
       />
 
       {error ? (
@@ -72,6 +89,31 @@ export default function BoardsPage() {
             </li>
           ))}
         </ul>
+      )}
+
+      {creating && (
+        <NameDialog
+          title="Create board"
+          label="Board name"
+          submitLabel="Create board"
+          placeholder="Q3 roadmap"
+          pending={createBoard.isPending}
+          error={
+            createBoard.error instanceof ApiError
+              ? (createBoard.error.fieldError("name") ??
+                createBoard.error.message)
+              : undefined
+          }
+          onClose={() => setCreating(false)}
+          onSubmit={(name) =>
+            createBoard.mutate(name, {
+              onSuccess: (board) => {
+                setCreating(false);
+                navigate(`/boards/${board.id}`);
+              },
+            })
+          }
+        />
       )}
     </div>
   );

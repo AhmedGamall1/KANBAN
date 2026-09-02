@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 
 export type Role = "owner" | "member" | "viewer";
@@ -22,6 +22,22 @@ export function useWorkspaces() {
 
       return workspaces;
     },
+  });
+}
+
+export function useCreateWorkspace() {
+  const client = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (name: string) => {
+      const { workspace } = await api.post<{ workspace: Workspace }>(
+        "/workspaces",
+        { name },
+      );
+
+      return workspace;
+    },
+    onSuccess: () => client.invalidateQueries({ queryKey: workspacesQueryKey }),
   });
 }
 

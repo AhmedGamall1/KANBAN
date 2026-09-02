@@ -6,7 +6,10 @@ import {
   ChevronDownIcon,
   PlusIcon,
 } from "@/components/ui/icons";
+import NameDialog from "@/components/ui/NameDialog";
+import { ApiError } from "@/lib/api";
 import {
+  useCreateWorkspace,
   useWorkspaces,
   type Workspace,
 } from "@/workspaces/useWorkspaces";
@@ -22,7 +25,9 @@ export default function WorkspaceSwitcher({
   workspace,
 }: WorkspaceSwitcherProps) {
   const { data: workspaces } = useWorkspaces();
+  const createWorkspace = useCreateWorkspace();
   const [open, setOpen] = useState(false);
+  const [creating, setCreating] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
@@ -114,12 +119,42 @@ export default function WorkspaceSwitcher({
 
           <button
             type="button"
+            onClick={() => {
+              setOpen(false);
+              createWorkspace.reset();
+              setCreating(true);
+            }}
             className="flex w-full items-center gap-2 rounded-control px-2 py-1.5 text-left text-ink-muted transition-colors hover:bg-subtle hover:text-ink"
           >
             <PlusIcon />
             Create workspace
           </button>
         </div>
+      )}
+
+      {creating && (
+        <NameDialog
+          title="Create workspace"
+          label="Workspace name"
+          submitLabel="Create workspace"
+          placeholder="Acme product"
+          pending={createWorkspace.isPending}
+          error={
+            createWorkspace.error instanceof ApiError
+              ? (createWorkspace.error.fieldError("name") ??
+                createWorkspace.error.message)
+              : undefined
+          }
+          onClose={() => setCreating(false)}
+          onSubmit={(name) =>
+            createWorkspace.mutate(name, {
+              onSuccess: (workspace) => {
+                setCreating(false);
+                navigate(`/workspaces/${workspace.id}`);
+              },
+            })
+          }
+        />
       )}
     </div>
   );
