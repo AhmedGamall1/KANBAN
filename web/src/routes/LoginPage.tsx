@@ -45,7 +45,11 @@ export default function LoginPage() {
       footer={
         <>
           New to Collab Board?{" "}
-          <Link to="/signup" className="font-medium text-brand hover:underline">
+          <Link
+            to="/signup"
+            state={location.state}
+            className="font-medium text-brand hover:underline"
+          >
             Create an account
           </Link>
         </>

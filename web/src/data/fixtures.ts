@@ -1,12 +1,3 @@
-export const inviteLinks: Record<string, string> = {
-  acme: "http://localhost:5173/invite/k3f9qs2xva7m",
-  opensource: "http://localhost:5173/invite/p7wd4nc1ehzt",
-  design: "http://localhost:5173/invite/b2ym8rk6ju4q",
-};
-
-
-
-
 export interface PresenceUser {
   boardId: string;
   userId: string;

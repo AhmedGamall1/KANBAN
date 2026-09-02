@@ -1,5 +1,5 @@
 import type { SubmitEvent } from "react";
-import { Link, Navigate, useNavigate } from "react-router";
+import { Link, Navigate, useLocation, useNavigate } from "react-router";
 import { useAuth, useSignup } from "@/auth/useAuth";
 import Button from "@/components/ui/Button";
 import TextField from "@/components/ui/TextField";
@@ -10,6 +10,7 @@ export default function SignupPage() {
   const { user } = useAuth();
   const signup = useSignup();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const error = signup.error instanceof ApiError ? signup.error : null;
   const hasFieldErrors = Object.keys(error?.fieldErrors ?? {}).length > 0;
@@ -18,6 +19,7 @@ export default function SignupPage() {
     event.preventDefault();
 
     const data = new FormData(event.currentTarget);
+    const state = location.state as { from?: string } | null;
 
     signup.mutate(
       {
@@ -27,7 +29,7 @@ export default function SignupPage() {
       },
       {
         onSuccess: () => {
-          navigate("/workspaces", { replace: true });
+          navigate(state?.from ?? "/workspaces", { replace: true });
         },
       },
     );
@@ -44,7 +46,11 @@ export default function SignupPage() {
       footer={
         <>
           Already have an account?{" "}
-          <Link to="/login" className="font-medium text-brand hover:underline">
+          <Link
+            to="/login"
+            state={location.state}
+            className="font-medium text-brand hover:underline"
+          >
             Log in
           </Link>
         </>

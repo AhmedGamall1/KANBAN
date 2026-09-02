@@ -3,6 +3,7 @@ import RequireAuth from "@/components/RequireAuth";
 import AppLayout from "@/layouts/AppLayout";
 import BoardPage from "@/routes/BoardPage";
 import BoardsPage from "@/routes/BoardsPage";
+import InvitePage from "@/routes/InvitePage";
 import LoginPage from "@/routes/LoginPage";
 import MembersPage from "@/routes/MembersPage";
 import NotFoundPage from "@/routes/NotFoundPage";
@@ -17,6 +18,7 @@ export default function App() {
 
       <Route element={<RequireAuth />}>
         <Route path="/" element={<Navigate to="/workspaces" replace />} />
+        <Route path="/invite/:token" element={<InvitePage />} />
         <Route element={<AppLayout />}>
           <Route path="/workspaces" element={<WorkspacesIndexPage />} />
           <Route path="/workspaces/:workspaceId" element={<BoardsPage />} />
