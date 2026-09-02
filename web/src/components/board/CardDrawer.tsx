@@ -4,7 +4,11 @@ import Button from "@/components/ui/Button";
 import Select from "@/components/ui/Select";
 import { CloseIcon } from "@/components/ui/icons";
 import type { Card, CardLabel, Column } from "@/boards/useBoard";
-import { activity, type ActivityEntry, type CardChanges } from "@/data/fixtures";
+import {
+  useCardActivity,
+  type ActivityEntry,
+  type CardChanges,
+} from "@/boards/useCardActivity";
 import { relativeTime } from "@/lib/relativeTime";
 import type { Member } from "@/workspaces/useMembers";
 
@@ -75,6 +79,8 @@ function describeActivity(
         entry.actor.id,
         membersById,
       );
+    case "card_deleted":
+      return "deleted this card";
   }
 }
 
@@ -104,9 +110,12 @@ export default function CardDrawer({
     dialogRef.current?.showModal();
   }, []);
 
-  const entries = activity
-    .filter((entry) => entry.cardId === card.id)
-    .sort((a, b) => Number(b.seq) - Number(a.seq));
+  const { data: activity, isPending: activityPending } = useCardActivity(
+    card.id,
+  );
+  const entries = [...(activity ?? [])].sort(
+    (a, b) => Number(b.seq) - Number(a.seq),
+  );
 
   return (
     <dialog
@@ -179,7 +188,9 @@ export default function CardDrawer({
           <section className="mt-6">
             <h3 className="text-sm font-medium text-ink">Activity</h3>
 
-            {entries.length === 0 ? (
+            {activityPending ? (
+              <p className="mt-1.5 text-ink-muted">Loading…</p>
+            ) : entries.length === 0 ? (
               <p className="mt-1.5 text-ink-muted">Nothing has happened yet.</p>
             ) : (
               <ul className="mt-3 flex flex-col gap-3">
