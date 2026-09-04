@@ -1,17 +1,12 @@
-import { useMutation, useQueryClient, type QueryClient } from "@tanstack/react-query";
-import { boardQueryKey, type BoardData, type Card } from "@/boards/useBoard";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  boardQueryKey,
+  patchBoard,
+  type BoardData,
+  type Card,
+} from "@/boards/useBoard";
 import { cardActivityQueryKey, type CardChanges } from "@/boards/useCardActivity";
 import { api } from "@/lib/api";
-
-function patchBoard(
-  client: QueryClient,
-  boardId: string,
-  update: (data: BoardData) => BoardData,
-) {
-  client.setQueryData<BoardData>(boardQueryKey(boardId), (current) =>
-    current ? update(current) : current,
-  );
-}
 
 export function useCreateCard(boardId: string) {
   const client = useQueryClient();

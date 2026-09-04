@@ -1,4 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type QueryClient,
+} from "@tanstack/react-query";
 import { boardsQueryKey, type Board } from "@/boards/useBoards";
 import { api } from "@/lib/api";
 
@@ -72,6 +77,16 @@ export function normalizeBoard(response: BoardResponse): BoardData {
     cardOrder,
     seq: response.seq,
   };
+}
+
+export function patchBoard(
+  client: QueryClient,
+  boardId: string,
+  update: (data: BoardData) => BoardData,
+) {
+  client.setQueryData<BoardData>(boardQueryKey(boardId), (current) =>
+    current ? update(current) : current,
+  );
 }
 
 export function useRenameBoard(

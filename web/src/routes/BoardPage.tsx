@@ -11,9 +11,11 @@ import {
   type BoardData,
 } from "@/boards/useBoard";
 import { useCreateCard } from "@/boards/useCards";
+import { useCreateColumn, useMoveColumn } from "@/boards/useColumns";
 import BoardColumn from "@/components/board/BoardColumn";
 import CardDrawer from "@/components/board/CardDrawer";
 import PresenceBar from "@/components/board/PresenceBar";
+import Button from "@/components/ui/Button";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import NameDialog from "@/components/ui/NameDialog";
 import Spinner from "@/components/ui/Spinner";
@@ -27,15 +29,20 @@ export default function BoardPage() {
   const { boardId } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+
   const [openCardId, setOpenCardId] = useState<string | null>(null);
   const [renaming, setRenaming] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [addingColumn, setAddingColumn] = useState(false);
+
   const { data, isPending, error } = useBoard(boardId);
   const { workspace } = useWorkspace(data?.board.workspaceId);
   const { data: boardMembers } = useMembers(data?.board.workspaceId);
   const renameBoard = useRenameBoard(boardId ?? "", data?.board.workspaceId);
   const deleteBoard = useDeleteBoard(boardId ?? "", data?.board.workspaceId);
   const createCard = useCreateCard(boardId ?? "");
+  const createColumn = useCreateColumn(boardId ?? "");
+  const moveColumn = useMoveColumn(boardId ?? "");
 
   if (isPending) {
     return <Spinner />;
@@ -84,10 +91,34 @@ export default function BoardPage() {
     );
   }
 
+  function persistColumnMove(columnId: string) {
+    const order =
+      queryClient.getQueryData<BoardData>(boardQueryKey(boardId ?? ""))
+        ?.columnOrder ?? [];
+    const index = order.indexOf(columnId);
+
+    if (index === -1) {
+      return;
+    }
+
+    moveColumn.mutate({
+      columnId,
+      prevColumnId: order[index - 1] ?? null,
+      nextColumnId: order[index + 1] ?? null,
+    });
+  }
+
   return (
     <DragDropProvider
       onDragOver={(event) => {
         reorder(event, String(event.operation.source?.type ?? "card"));
+      }}
+      onDragEnd={(event) => {
+        const source = event.operation.source;
+
+        if (!event.canceled && source?.type === "column") {
+          persistColumnMove(String(source.id));
+        }
       }}
     >
       <div className="flex h-full flex-col">
@@ -140,6 +171,18 @@ export default function BoardPage() {
                   ? "Add a column to start moving work across this board."
                   : "Nobody has added a column to this board yet."}
               </p>
+
+              {canEdit && (
+                <Button
+                  className="mt-4"
+                  onClick={() => {
+                    createColumn.reset();
+                    setAddingColumn(true);
+                  }}
+                >
+                  Add a column
+                </Button>
+              )}
             </div>
           </div>
         ) : (
@@ -177,6 +220,10 @@ export default function BoardPage() {
               {canEdit && (
                 <button
                   type="button"
+                  onClick={() => {
+                    createColumn.reset();
+                    setAddingColumn(true);
+                  }}
                   className="flex w-72 shrink-0 items-center gap-1.5 rounded-card border border-dashed border-line-strong px-3 py-2.5 text-ink-muted transition-colors hover:bg-subtle hover:text-ink"
                 >
                   <PlusIcon />
@@ -199,6 +246,28 @@ export default function BoardPage() {
             boardMembers={boardMembers ?? []}
             canEdit={canEdit}
             onClose={() => setOpenCardId(null)}
+          />
+        )}
+
+        {addingColumn && (
+          <NameDialog
+            title="Add column"
+            label="Column name"
+            submitLabel="Add column"
+            placeholder="In review"
+            pending={createColumn.isPending}
+            error={
+              createColumn.error instanceof ApiError
+                ? (createColumn.error.fieldError("name") ??
+                  createColumn.error.message)
+                : undefined
+            }
+            onClose={() => setAddingColumn(false)}
+            onSubmit={(name) =>
+              createColumn.mutate(name, {
+                onSuccess: () => setAddingColumn(false),
+              })
+            }
           />
         )}
 

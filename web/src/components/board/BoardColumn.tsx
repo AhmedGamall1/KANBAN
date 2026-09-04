@@ -3,8 +3,12 @@ import { useSortable } from "@dnd-kit/react/sortable";
 import { useState, type SubmitEvent } from "react";
 import BoardCard from "@/components/board/BoardCard";
 import Button from "@/components/ui/Button";
-import { PlusIcon } from "@/components/ui/icons";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import NameDialog from "@/components/ui/NameDialog";
+import { PencilIcon, PlusIcon, TrashIcon } from "@/components/ui/icons";
 import type { Card, Column } from "@/boards/useBoard";
+import { useDeleteColumn, useRenameColumn } from "@/boards/useColumns";
+import { ApiError } from "@/lib/api";
 import type { Member } from "@/workspaces/useMembers";
 
 interface BoardColumnProps {
@@ -34,6 +38,10 @@ export default function BoardColumn({
 }: BoardColumnProps) {
   const [composing, setComposing] = useState(false);
   const [title, setTitle] = useState("");
+  const [renaming, setRenaming] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const renameColumn = useRenameColumn(column.boardId);
+  const deleteColumn = useDeleteColumn(column.boardId);
   const { ref, handleRef, isDragging } = useSortable({
     id: column.id,
     index,
@@ -69,17 +77,48 @@ export default function BoardColumn({
         isDragging ? "opacity-40" : "",
       ].join(" ")}
     >
-      <header
-        ref={handleRef}
-        className={[
-          "flex items-center gap-2 px-3 py-2.5",
-          canEdit ? "cursor-grab active:cursor-grabbing" : "",
-        ].join(" ")}
-      >
-        <h2 className="min-w-0 flex-1 truncate font-medium text-ink">
+      <header className="flex items-center gap-2 px-3 py-2.5">
+        <h2
+          ref={handleRef}
+          className={[
+            "min-w-0 flex-1 truncate font-medium text-ink",
+            canEdit ? "cursor-grab active:cursor-grabbing" : "",
+          ].join(" ")}
+        >
           {column.name}
         </h2>
+
         <span className="text-xs text-ink-muted">{cards.length}</span>
+
+        {canEdit && (
+          <div className="flex shrink-0 items-center gap-0.5">
+            <button
+              type="button"
+              aria-label={`Rename ${column.name}`}
+              title="Rename column"
+              onClick={() => {
+                renameColumn.reset();
+                setRenaming(true);
+              }}
+              className="rounded-control p-1 text-ink-faint transition-colors hover:bg-line hover:text-ink"
+            >
+              <PencilIcon className="h-3.5 w-3.5 shrink-0" />
+            </button>
+
+            <button
+              type="button"
+              aria-label={`Delete ${column.name}`}
+              title="Delete column"
+              onClick={() => {
+                deleteColumn.reset();
+                setDeleting(true);
+              }}
+              className="rounded-control p-1 text-ink-faint transition-colors hover:bg-danger-soft hover:text-danger"
+            >
+              <TrashIcon className="h-3.5 w-3.5 shrink-0" />
+            </button>
+          </div>
+        )}
       </header>
 
       <ul className="flex min-h-0 flex-col gap-2 overflow-y-auto px-2">
@@ -156,6 +195,45 @@ export default function BoardColumn({
           <PlusIcon />
           Add a card
         </button>
+      )}
+
+      {renaming && (
+        <NameDialog
+          title="Rename column"
+          label="Column name"
+          submitLabel="Save"
+          initialValue={column.name}
+          pending={renameColumn.isPending}
+          error={
+            renameColumn.error instanceof ApiError
+              ? (renameColumn.error.fieldError("name") ??
+                renameColumn.error.message)
+              : undefined
+          }
+          onClose={() => setRenaming(false)}
+          onSubmit={(name) =>
+            renameColumn.mutate(
+              { columnId: column.id, name },
+              { onSuccess: () => setRenaming(false) },
+            )
+          }
+        />
+      )}
+
+      {deleting && (
+        <ConfirmDialog
+          title="Delete column"
+          body={`"${column.name}" and its ${cards.length} card${cards.length === 1 ? "" : "s"} will be deleted. This cannot be undone.`}
+          confirmLabel="Delete column"
+          pending={deleteColumn.isPending}
+          error={
+            deleteColumn.error instanceof ApiError
+              ? deleteColumn.error.message
+              : undefined
+          }
+          onClose={() => setDeleting(false)}
+          onConfirm={() => deleteColumn.mutate(column.id)}
+        />
       )}
     </section>
   );
