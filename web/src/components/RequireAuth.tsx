@@ -15,7 +15,10 @@ export default function RequireAuth() {
   }
 
   if (!user) {
-    return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+    console.log(location);
+    const from = `${location.pathname}${location.search}${location.hash}`;
+
+    return <Navigate to="/login" replace state={{ from }} />;
   }
 
   return <Outlet />;

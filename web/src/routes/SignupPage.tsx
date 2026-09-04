@@ -1,5 +1,5 @@
 import type { SubmitEvent } from "react";
-import { Link, Navigate, useLocation, useNavigate } from "react-router";
+import { Link, Navigate, useLocation } from "react-router";
 import { useAuth, useSignup } from "@/auth/useAuth";
 import Button from "@/components/ui/Button";
 import TextField from "@/components/ui/TextField";
@@ -9,9 +9,9 @@ import { ApiError } from "@/lib/api";
 export default function SignupPage() {
   const { user } = useAuth();
   const signup = useSignup();
-  const navigate = useNavigate();
   const location = useLocation();
 
+  const state = location.state as { from?: string } | null;
   const error = signup.error instanceof ApiError ? signup.error : null;
   const hasFieldErrors = Object.keys(error?.fieldErrors ?? {}).length > 0;
 
@@ -19,24 +19,16 @@ export default function SignupPage() {
     event.preventDefault();
 
     const data = new FormData(event.currentTarget);
-    const state = location.state as { from?: string } | null;
 
-    signup.mutate(
-      {
-        name: String(data.get("name") ?? ""),
-        email: String(data.get("email") ?? ""),
-        password: String(data.get("password") ?? ""),
-      },
-      {
-        onSuccess: () => {
-          navigate(state?.from ?? "/workspaces", { replace: true });
-        },
-      },
-    );
+    signup.mutate({
+      name: String(data.get("name") ?? ""),
+      email: String(data.get("email") ?? ""),
+      password: String(data.get("password") ?? ""),
+    });
   }
 
   if (user) {
-    return <Navigate to="/workspaces" replace />;
+    return <Navigate to={state?.from ?? "/workspaces"} replace />;
   }
 
   return (

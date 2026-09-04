@@ -1,5 +1,5 @@
 import type { SubmitEvent } from "react";
-import { Link, Navigate, useLocation, useNavigate } from "react-router";
+import { Link, Navigate, useLocation } from "react-router";
 import { useAuth, useLogin } from "@/auth/useAuth";
 import Button from "@/components/ui/Button";
 import TextField from "@/components/ui/TextField";
@@ -9,9 +9,10 @@ import { ApiError } from "@/lib/api";
 export default function LoginPage() {
   const { user } = useAuth();
   const login = useLogin();
-  const navigate = useNavigate();
   const location = useLocation();
 
+  const state = location.state as { from?: string } | null;
+  console.log(state);
   const error = login.error instanceof ApiError ? login.error : null;
   const hasFieldErrors = Object.keys(error?.fieldErrors ?? {}).length > 0;
 
@@ -19,23 +20,15 @@ export default function LoginPage() {
     event.preventDefault();
 
     const data = new FormData(event.currentTarget);
-    const state = location.state as { from?: string } | null;
 
-    login.mutate(
-      {
-        email: String(data.get("email") ?? ""),
-        password: String(data.get("password") ?? ""),
-      },
-      {
-        onSuccess: () => {
-          navigate(state?.from ?? "/workspaces", { replace: true });
-        },
-      },
-    );
+    login.mutate({
+      email: String(data.get("email") ?? ""),
+      password: String(data.get("password") ?? ""),
+    });
   }
 
   if (user) {
-    return <Navigate to="/workspaces" replace />;
+    return <Navigate to={state?.from ?? "/workspaces"} replace />;
   }
 
   return (
