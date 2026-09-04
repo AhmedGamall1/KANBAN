@@ -12,7 +12,6 @@ export default function LoginPage() {
   const location = useLocation();
 
   const state = location.state as { from?: string } | null;
-  console.log(state);
   const error = login.error instanceof ApiError ? login.error : null;
   const hasFieldErrors = Object.keys(error?.fieldErrors ?? {}).length > 0;
 

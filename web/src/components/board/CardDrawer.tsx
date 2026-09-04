@@ -1,6 +1,7 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Avatar from "@/components/ui/Avatar";
 import Button from "@/components/ui/Button";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import Select from "@/components/ui/Select";
 import { CloseIcon } from "@/components/ui/icons";
 import type { Card, CardLabel, Column } from "@/boards/useBoard";
@@ -9,6 +10,8 @@ import {
   type ActivityEntry,
   type CardChanges,
 } from "@/boards/useCardActivity";
+import { useDeleteCard, useUpdateCard } from "@/boards/useCards";
+import { ApiError } from "@/lib/api";
 import { relativeTime } from "@/lib/relativeTime";
 import type { Member } from "@/workspaces/useMembers";
 
@@ -105,10 +108,17 @@ export default function CardDrawer({
   onClose,
 }: CardDrawerProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const [deleting, setDeleting] = useState(false);
+  const updateCard = useUpdateCard(card.boardId);
+  const deleteCard = useDeleteCard(card.boardId);
 
   useEffect(() => {
     dialogRef.current?.showModal();
   }, []);
+
+  function save(changes: CardChanges) {
+    updateCard.mutate({ cardId: card.id, changes });
+  }
 
   const { data: activity, isPending: activityPending } = useCardActivity(
     card.id,
@@ -134,9 +144,33 @@ export default function CardDrawer({
             <p className="text-xs text-ink-muted">
               In {column?.name ?? "this board"}
             </p>
-            <h2 className="mt-1 text-lg font-semibold tracking-tight text-ink">
-              {card.title}
-            </h2>
+
+            {canEdit ? (
+              <input
+                defaultValue={card.title}
+                aria-label="Card title"
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    event.currentTarget.blur();
+                  }
+                }}
+                onBlur={(event) => {
+                  const value = event.target.value.trim();
+
+                  if (!value) {
+                    event.target.value = card.title;
+                  } else if (value !== card.title) {
+                    save({ title: value });
+                  }
+                }}
+                className="-mx-1.5 mt-1 w-full rounded-control border border-transparent bg-transparent px-1.5 py-0.5 text-lg font-semibold tracking-tight text-ink outline-none hover:border-line focus:border-brand"
+              />
+            ) : (
+              <h2 className="mt-1 text-lg font-semibold tracking-tight text-ink">
+                {card.title}
+              </h2>
+            )}
           </div>
 
           <button
@@ -150,11 +184,20 @@ export default function CardDrawer({
         </header>
 
         <div className="flex-1 overflow-y-auto px-5 py-4">
+          {updateCard.error instanceof ApiError && (
+            <p className="mb-4 rounded-control bg-danger-soft px-2.5 py-2 text-sm text-danger">
+              {updateCard.error.message}
+            </p>
+          )}
+
           <div className="grid grid-cols-2 gap-3">
             <Select
               label="Assignee"
-              defaultValue={card.assigneeId ?? ""}
+              value={card.assigneeId ?? ""}
               disabled={!canEdit}
+              onChange={(event) =>
+                save({ assigneeId: event.target.value || null })
+              }
             >
               <option value="">Unassigned</option>
               {boardMembers.map((member) => (
@@ -166,8 +209,11 @@ export default function CardDrawer({
 
             <Select
               label="Label"
-              defaultValue={card.label ?? ""}
+              value={card.label ?? ""}
               disabled={!canEdit}
+              onChange={(event) =>
+                save({ label: (event.target.value || null) as CardLabel | null })
+              }
             >
               <option value="">No label</option>
               {LABELS.map((label) => (
@@ -180,9 +226,28 @@ export default function CardDrawer({
 
           <section className="mt-6">
             <h3 className="text-sm font-medium text-ink">Description</h3>
-            <p className="mt-1.5 whitespace-pre-line text-ink-muted">
-              {card.description ?? "No description yet."}
-            </p>
+
+            {canEdit ? (
+              <textarea
+                rows={4}
+                defaultValue={card.description ?? ""}
+                aria-label="Description"
+                placeholder="Add more detail…"
+                onBlur={(event) => {
+                  const value = event.target.value.trim();
+                  const next = value === "" ? null : value;
+
+                  if (next !== card.description) {
+                    save({ description: next });
+                  }
+                }}
+                className="mt-1.5 w-full resize-none rounded-card border border-line bg-subtle px-3 py-2 text-ink outline-none placeholder:text-ink-faint focus:border-brand focus:bg-surface"
+              />
+            ) : (
+              <p className="mt-1.5 whitespace-pre-line text-ink-muted">
+                {card.description ?? "No description yet."}
+              </p>
+            )}
           </section>
 
           <section className="mt-6">
@@ -219,12 +284,42 @@ export default function CardDrawer({
 
         {canEdit && (
           <footer className="shrink-0 border-t border-line px-5 py-3">
-            <Button variant="danger-ghost" size="sm">
+            <Button
+              variant="danger-ghost"
+              size="sm"
+              onClick={() => {
+                deleteCard.reset();
+                setDeleting(true);
+              }}
+            >
               Delete card
             </Button>
           </footer>
         )}
       </div>
+
+      {deleting && (
+        <ConfirmDialog
+          title="Delete card"
+          body={`"${card.title}" and its activity will be deleted. This cannot be undone.`}
+          confirmLabel="Delete card"
+          pending={deleteCard.isPending}
+          error={
+            deleteCard.error instanceof ApiError
+              ? deleteCard.error.message
+              : undefined
+          }
+          onClose={() => setDeleting(false)}
+          onConfirm={() =>
+            deleteCard.mutate(card.id, {
+              onSuccess: () => {
+                setDeleting(false);
+                onClose();
+              },
+            })
+          }
+        />
+      )}
     </dialog>
   );
 }

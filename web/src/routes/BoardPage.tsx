@@ -10,6 +10,7 @@ import {
   useRenameBoard,
   type BoardData,
 } from "@/boards/useBoard";
+import { useCreateCard } from "@/boards/useCards";
 import BoardColumn from "@/components/board/BoardColumn";
 import CardDrawer from "@/components/board/CardDrawer";
 import PresenceBar from "@/components/board/PresenceBar";
@@ -34,6 +35,7 @@ export default function BoardPage() {
   const { data: boardMembers } = useMembers(data?.board.workspaceId);
   const renameBoard = useRenameBoard(boardId ?? "", data?.board.workspaceId);
   const deleteBoard = useDeleteBoard(boardId ?? "", data?.board.workspaceId);
+  const createCard = useCreateCard(boardId ?? "");
 
   if (isPending) {
     return <Spinner />;
@@ -154,6 +156,20 @@ export default function BoardPage() {
                   membersById={membersById}
                   canEdit={canEdit}
                   editingCards={editingCards}
+                  addingCard={
+                    createCard.isPending &&
+                    createCard.variables?.columnId === column.id
+                  }
+                  addError={
+                    createCard.error instanceof ApiError &&
+                    createCard.variables?.columnId === column.id
+                      ? (createCard.error.fieldError("title") ??
+                        createCard.error.message)
+                      : undefined
+                  }
+                  onAddCard={(columnId, title) =>
+                    createCard.mutateAsync({ columnId, title })
+                  }
                   onOpenCard={setOpenCardId}
                 />
               ))}
