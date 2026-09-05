@@ -79,6 +79,37 @@ export function useUpdateCard(boardId: string) {
 }
 
 // optimistic
+export function useMoveCard(boardId: string) {
+  const client = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: {
+      cardId: string;
+      columnId: string;
+      prevCardId: string | null;
+      nextCardId: string | null;
+    }) =>
+      api.patch<{ card: Card }>(`/cards/${input.cardId}/position`, {
+        columnId: input.columnId,
+        prevCardId: input.prevCardId,
+        nextCardId: input.nextCardId,
+      }),
+    onSuccess: ({ card }) => {
+      patchBoard(client, boardId, (data) => ({
+        ...data,
+        cardsById: { ...data.cardsById, [card.id]: card },
+      }));
+
+      void client.invalidateQueries({
+        queryKey: cardActivityQueryKey(card.id),
+      });
+    },
+    onError: () => {
+      void client.invalidateQueries({ queryKey: boardQueryKey(boardId) });
+    },
+  });
+}
+
 export function useDeleteCard(boardId: string) {
   const client = useQueryClient();
   const key = boardQueryKey(boardId);

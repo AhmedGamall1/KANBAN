@@ -1,7 +1,7 @@
 import { move } from "@dnd-kit/helpers";
 import { DragDropProvider } from "@dnd-kit/react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import {
   boardQueryKey,
@@ -10,7 +10,7 @@ import {
   useRenameBoard,
   type BoardData,
 } from "@/boards/useBoard";
-import { useCreateCard } from "@/boards/useCards";
+import { useCreateCard, useMoveCard } from "@/boards/useCards";
 import { useCreateColumn, useMoveColumn } from "@/boards/useColumns";
 import BoardColumn from "@/components/board/BoardColumn";
 import CardDrawer from "@/components/board/CardDrawer";
@@ -43,6 +43,8 @@ export default function BoardPage() {
   const createCard = useCreateCard(boardId ?? "");
   const createColumn = useCreateColumn(boardId ?? "");
   const moveColumn = useMoveColumn(boardId ?? "");
+  const moveCard = useMoveCard(boardId ?? "");
+  const snapshot = useRef<BoardData | null>(null);
 
   if (isPending) {
     return <Spinner />;
@@ -91,33 +93,89 @@ export default function BoardPage() {
     );
   }
 
+  function currentBoard() {
+    return queryClient.getQueryData<BoardData>(boardQueryKey(boardId ?? ""));
+  }
+
+  function rollback() {
+    if (snapshot.current) {
+      queryClient.setQueryData(boardQueryKey(boardId ?? ""), snapshot.current);
+    }
+  }
+
+  function columnOf(board: BoardData, cardId: string) {
+    return board.columnOrder.find((id) => board.cardOrder[id]?.includes(cardId));
+  }
+
   function persistColumnMove(columnId: string) {
-    const order =
-      queryClient.getQueryData<BoardData>(boardQueryKey(boardId ?? ""))
-        ?.columnOrder ?? [];
+    const order = currentBoard()?.columnOrder ?? [];
     const index = order.indexOf(columnId);
 
-    if (index === -1) {
+    if (index === -1 || snapshot.current?.columnOrder[index] === columnId) {
       return;
     }
 
-    moveColumn.mutate({
-      columnId,
-      prevColumnId: order[index - 1] ?? null,
-      nextColumnId: order[index + 1] ?? null,
-    });
+    moveColumn.mutate(
+      {
+        columnId,
+        prevColumnId: order[index - 1] ?? null,
+        nextColumnId: order[index + 1] ?? null,
+      },
+      { onError: rollback },
+    );
+  }
+
+  function persistCardMove(cardId: string) {
+    const board = currentBoard();
+    const columnId = board ? columnOf(board, cardId) : undefined;
+
+    if (!board || !columnId) {
+      return;
+    }
+
+    const siblings = board.cardOrder[columnId];
+    const index = siblings.indexOf(cardId);
+    const before = snapshot.current;
+
+    if (
+      before &&
+      columnOf(before, cardId) === columnId &&
+      before.cardOrder[columnId]?.[index] === cardId
+    ) {
+      return;
+    }
+
+    moveCard.mutate(
+      {
+        cardId,
+        columnId,
+        prevCardId: siblings[index - 1] ?? null,
+        nextCardId: siblings[index + 1] ?? null,
+      },
+      { onError: rollback },
+    );
   }
 
   return (
     <DragDropProvider
+      onDragStart={() => {
+        snapshot.current = currentBoard() ?? null;
+      }}
       onDragOver={(event) => {
         reorder(event, String(event.operation.source?.type ?? "card"));
       }}
       onDragEnd={(event) => {
         const source = event.operation.source;
 
-        if (!event.canceled && source?.type === "column") {
+        if (event.canceled) {
+          rollback();
+          return;
+        }
+
+        if (source?.type === "column") {
           persistColumnMove(String(source.id));
+        } else if (source?.type === "card") {
+          persistCardMove(String(source.id));
         }
       }}
     >
