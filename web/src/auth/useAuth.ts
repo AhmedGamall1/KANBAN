@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError, api } from "@/lib/api";
+import { socket } from "@/realtime/socket";
 
 export interface AuthUser {
   id: string;
@@ -69,6 +70,7 @@ export function useLogout() {
   return useMutation({
     mutationFn: () => api.post<void>("/auth/logout"),
     onSuccess: () => {
+      socket.disconnect();
       client.clear();
     },
   });

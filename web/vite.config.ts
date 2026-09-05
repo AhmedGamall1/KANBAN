@@ -18,6 +18,10 @@ export default defineConfig({
         target: apiTarget,
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
+      '/socket.io': {
+        target: apiTarget,
+        ws: true,
+      },
     },
   },
 })

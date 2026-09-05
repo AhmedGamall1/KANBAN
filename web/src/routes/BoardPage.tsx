@@ -22,6 +22,7 @@ import Spinner from "@/components/ui/Spinner";
 import { PencilIcon, PlusIcon, TrashIcon } from "@/components/ui/icons";
 import { editingCards, presence } from "@/data/fixtures";
 import { ApiError } from "@/lib/api";
+import { useBoardSocket } from "@/realtime/useBoardSocket";
 import { useMembers, type Member } from "@/workspaces/useMembers";
 import { useWorkspace } from "@/workspaces/useWorkspaces";
 
@@ -45,6 +46,8 @@ export default function BoardPage() {
   const moveColumn = useMoveColumn(boardId ?? "");
   const moveCard = useMoveCard(boardId ?? "");
   const snapshot = useRef<BoardData | null>(null);
+
+  useBoardSocket(boardId);
 
   if (isPending) {
     return <Spinner />;
