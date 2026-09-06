@@ -14,14 +14,15 @@ import { useCreateCard, useMoveCard } from "@/boards/useCards";
 import { useCreateColumn, useMoveColumn } from "@/boards/useColumns";
 import BoardColumn from "@/components/board/BoardColumn";
 import CardDrawer from "@/components/board/CardDrawer";
+import CursorLayer from "@/components/board/CursorLayer";
 import PresenceBar from "@/components/board/PresenceBar";
 import Button from "@/components/ui/Button";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import NameDialog from "@/components/ui/NameDialog";
 import Spinner from "@/components/ui/Spinner";
 import { PencilIcon, PlusIcon, TrashIcon } from "@/components/ui/icons";
-import { editingCards } from "@/data/fixtures";
 import { ApiError } from "@/lib/api";
+import { socket } from "@/realtime/socket";
 import { useBoardSocket } from "@/realtime/useBoardSocket";
 import { useMembers, type Member } from "@/workspaces/useMembers";
 import { useWorkspace } from "@/workspaces/useWorkspaces";
@@ -47,7 +48,9 @@ export default function BoardPage() {
   const moveCard = useMoveCard(boardId ?? "");
   const snapshot = useRef<BoardData | null>(null);
 
-  const { presence } = useBoardSocket(boardId);
+  const { presence, cursors, editingCards } = useBoardSocket(boardId);
+  const surface = useRef<HTMLDivElement>(null);
+  const lastCursorAt = useRef(0);
 
   if (isPending) {
     return <Spinner />;
@@ -94,6 +97,22 @@ export default function BoardPage() {
           : { ...previous, cardOrder: move(previous.cardOrder, event) };
       },
     );
+  }
+
+  function trackCursor(event: { clientX: number; clientY: number }) {
+    const box = surface.current?.getBoundingClientRect();
+    const now = Date.now();
+
+    if (!box || box.width === 0 || now - lastCursorAt.current < 50) {
+      return;
+    }
+
+    lastCursorAt.current = now;
+
+    socket.emit("cursor:move", {
+      x: Math.min(1, Math.max(0, (event.clientX - box.left) / box.width)),
+      y: Math.min(1, Math.max(0, (event.clientY - box.top) / box.height)),
+    });
   }
 
   function currentBoard() {
@@ -245,8 +264,11 @@ export default function BoardPage() {
             </div>
           </div>
         ) : (
-          <div className="flex-1 overflow-x-auto p-6">
-            <div className="flex h-full items-start gap-3">
+          <div
+            className="flex-1 overflow-x-auto p-6"
+            onPointerMove={trackCursor}
+          >
+            <div ref={surface} className="relative flex h-full items-start gap-3">
               {boardColumns.map((column, columnIndex) => (
                 <BoardColumn
                   key={column.id}
@@ -289,6 +311,8 @@ export default function BoardPage() {
                   Add a column
                 </button>
               )}
+
+              <CursorLayer cursors={cursors} presence={presence} />
             </div>
           </div>
         )}

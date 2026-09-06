@@ -43,12 +43,20 @@ interface ServerToClientEvents {
   "board:state": (state: BoardState) => void;
   "board:event": (event: BoardEvent) => void;
   "presence:update": (payload: { users: PresenceUser[] }) => void;
+  "cursor:update": (payload: { userId: string; x: number; y: number }) => void;
+  "card:editing": (payload: {
+    cardId: string;
+    userId: string;
+    editing: boolean;
+  }) => void;
   "board:error": (payload: { message: string }) => void;
 }
 
 interface ClientToServerEvents {
   "board:join": (payload: { boardId: string; after?: string }) => void;
   "board:leave": () => void;
+  "cursor:move": (payload: { x: number; y: number }) => void;
+  "card:editing": (payload: { cardId: string; editing: boolean }) => void;
 }
 
 export type BoardSocket = Socket<ServerToClientEvents, ClientToServerEvents>;

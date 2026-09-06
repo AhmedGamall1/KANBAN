@@ -13,6 +13,7 @@ import {
 import { useDeleteCard, useUpdateCard } from "@/boards/useCards";
 import { ApiError } from "@/lib/api";
 import { relativeTime } from "@/lib/relativeTime";
+import { socket } from "@/realtime/socket";
 import type { Member } from "@/workspaces/useMembers";
 
 const LABELS: CardLabel[] = ["infra", "db", "frontend", "bug", "chore"];
@@ -113,8 +114,24 @@ export default function CardDrawer({
   const deleteCard = useDeleteCard(card.boardId);
 
   useEffect(() => {
-    dialogRef.current?.showModal();
+    const dialog = dialogRef.current;
+
+    if (dialog && !dialog.open) {
+      dialog.showModal();
+    }
   }, []);
+
+  useEffect(() => {
+    if (!canEdit) {
+      return;
+    }
+
+    socket.emit("card:editing", { cardId: card.id, editing: true });
+
+    return () => {
+      socket.emit("card:editing", { cardId: card.id, editing: false });
+    };
+  }, [card.id, canEdit]);
 
   function save(changes: CardChanges) {
     updateCard.mutate({ cardId: card.id, changes });

@@ -11,6 +11,11 @@ import {
 
 export type SocketStatus = "connecting" | "live" | "offline";
 
+export interface Cursor {
+  x: number;
+  y: number;
+}
+
 export function useBoardSocket(boardId: string | undefined) {
   const client = useQueryClient();
   const [status, setStatus] = useState<SocketStatus>(
@@ -18,6 +23,8 @@ export function useBoardSocket(boardId: string | undefined) {
   );
   const [error, setError] = useState<string | null>(null);
   const [presence, setPresence] = useState<PresenceUser[]>([]);
+  const [cursors, setCursors] = useState<Record<string, Cursor>>({});
+  const [editingCards, setEditingCards] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (!boardId) {
@@ -33,6 +40,8 @@ export function useBoardSocket(boardId: string | undefined) {
     function handleDisconnect() {
       setStatus("offline");
       setPresence([]);
+      setCursors({});
+      setEditingCards({});
     }
 
     function handleConnectError() {
@@ -46,7 +55,44 @@ export function useBoardSocket(boardId: string | undefined) {
     }
 
     function handlePresence(payload: { users: PresenceUser[] }) {
+      const present = new Set(payload.users.map((user) => user.id));
+
       setPresence(payload.users);
+      setCursors((current) =>
+        Object.fromEntries(
+          Object.entries(current).filter(([userId]) => present.has(userId)),
+        ),
+      );
+      setEditingCards((current) =>
+        Object.fromEntries(
+          Object.entries(current).filter(([, userId]) => present.has(userId)),
+        ),
+      );
+    }
+
+    function handleCursor(payload: { userId: string; x: number; y: number }) {
+      setCursors((current) => ({
+        ...current,
+        [payload.userId]: { x: payload.x, y: payload.y },
+      }));
+    }
+
+    function handleEditing(payload: {
+      cardId: string;
+      userId: string;
+      editing: boolean;
+    }) {
+      setEditingCards((current) => {
+        const next = { ...current };
+
+        if (payload.editing) {
+          next[payload.cardId] = payload.userId;
+        } else {
+          delete next[payload.cardId];
+        }
+
+        return next;
+      });
     }
 
     function handleBoardError(payload: { message: string }) {
@@ -63,6 +109,8 @@ export function useBoardSocket(boardId: string | undefined) {
     socket.on("board:state", handleState);
     socket.on("board:event", handleEvent);
     socket.on("presence:update", handlePresence);
+    socket.on("cursor:update", handleCursor);
+    socket.on("card:editing", handleEditing);
     socket.on("board:error", handleBoardError);
 
     if (socket.connected) {
@@ -83,10 +131,14 @@ export function useBoardSocket(boardId: string | undefined) {
       socket.off("board:state", handleState);
       socket.off("board:event", handleEvent);
       socket.off("presence:update", handlePresence);
+      socket.off("cursor:update", handleCursor);
+      socket.off("card:editing", handleEditing);
       socket.off("board:error", handleBoardError);
       setPresence([]);
+      setCursors({});
+      setEditingCards({});
     };
   }, [boardId, client]);
 
-  return { status, error, presence };
+  return { status, error, presence, cursors, editingCards };
 }

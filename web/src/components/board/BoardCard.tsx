@@ -1,7 +1,17 @@
-﻿import { useSortable } from "@dnd-kit/react/sortable";
+﻿import { PointerActivationConstraints } from "@dnd-kit/dom";
+import { PointerSensor } from "@dnd-kit/react";
+import { useSortable } from "@dnd-kit/react/sortable";
 import Avatar from "@/components/ui/Avatar";
 import type { Card, CardLabel } from "@/boards/useBoard";
 import type { Member } from "@/workspaces/useMembers";
+
+const dragOnlyAfterMoving = [
+  PointerSensor.configure({
+    activationConstraints: [
+      new PointerActivationConstraints.Distance({ value: 5 }),
+    ],
+  }),
+];
 
 const labelDotClasses: Record<CardLabel, string> = {
   infra: "bg-label-infra",
@@ -37,6 +47,7 @@ export default function BoardCard({
     type: "card",
     accept: "card",
     disabled: !canDrag,
+    sensors: dragOnlyAfterMoving,
   });
 
   return (
