@@ -20,7 +20,7 @@ import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import NameDialog from "@/components/ui/NameDialog";
 import Spinner from "@/components/ui/Spinner";
 import { PencilIcon, PlusIcon, TrashIcon } from "@/components/ui/icons";
-import { editingCards, presence } from "@/data/fixtures";
+import { editingCards } from "@/data/fixtures";
 import { ApiError } from "@/lib/api";
 import { useBoardSocket } from "@/realtime/useBoardSocket";
 import { useMembers, type Member } from "@/workspaces/useMembers";
@@ -47,7 +47,7 @@ export default function BoardPage() {
   const moveCard = useMoveCard(boardId ?? "");
   const snapshot = useRef<BoardData | null>(null);
 
-  useBoardSocket(boardId);
+  const { presence } = useBoardSocket(boardId);
 
   if (isPending) {
     return <Spinner />;
@@ -188,9 +188,7 @@ export default function BoardPage() {
             {data.board.name}
           </h1>
 
-          <PresenceBar
-            users={presence.filter((user) => user.boardId === data.board.id)}
-          />
+          <PresenceBar users={presence} />
 
           {canEdit && (
             <div className="flex shrink-0 items-center gap-1">

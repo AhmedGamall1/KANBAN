@@ -2,7 +2,12 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { patchBoard } from "@/boards/useBoard";
 import { applyBoardEvent } from "@/realtime/applyBoardEvent";
-import { socket, type BoardEvent, type BoardState } from "@/realtime/socket";
+import {
+  socket,
+  type BoardEvent,
+  type BoardState,
+  type PresenceUser,
+} from "@/realtime/socket";
 
 export type SocketStatus = "connecting" | "live" | "offline";
 
@@ -12,6 +17,7 @@ export function useBoardSocket(boardId: string | undefined) {
     socket.connected ? "live" : "connecting",
   );
   const [error, setError] = useState<string | null>(null);
+  const [presence, setPresence] = useState<PresenceUser[]>([]);
 
   useEffect(() => {
     if (!boardId) {
@@ -26,6 +32,7 @@ export function useBoardSocket(boardId: string | undefined) {
 
     function handleDisconnect() {
       setStatus("offline");
+      setPresence([]);
     }
 
     function handleConnectError() {
@@ -34,7 +41,12 @@ export function useBoardSocket(boardId: string | undefined) {
     }
 
     function handleState(state: BoardState) {
+      setPresence(state.presence);
       patchBoard(client, state.boardId, (data) => ({ ...data, seq: state.seq }));
+    }
+
+    function handlePresence(payload: { users: PresenceUser[] }) {
+      setPresence(payload.users);
     }
 
     function handleBoardError(payload: { message: string }) {
@@ -50,6 +62,7 @@ export function useBoardSocket(boardId: string | undefined) {
     socket.on("connect_error", handleConnectError);
     socket.on("board:state", handleState);
     socket.on("board:event", handleEvent);
+    socket.on("presence:update", handlePresence);
     socket.on("board:error", handleBoardError);
 
     if (socket.connected) {
@@ -69,9 +82,11 @@ export function useBoardSocket(boardId: string | undefined) {
       socket.off("connect_error", handleConnectError);
       socket.off("board:state", handleState);
       socket.off("board:event", handleEvent);
+      socket.off("presence:update", handlePresence);
       socket.off("board:error", handleBoardError);
+      setPresence([]);
     };
   }, [boardId, client]);
 
-  return { status, error };
+  return { status, error, presence };
 }

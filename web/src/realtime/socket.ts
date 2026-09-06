@@ -42,6 +42,7 @@ export type BoardEvent = {
 interface ServerToClientEvents {
   "board:state": (state: BoardState) => void;
   "board:event": (event: BoardEvent) => void;
+  "presence:update": (payload: { users: PresenceUser[] }) => void;
   "board:error": (payload: { message: string }) => void;
 }
 

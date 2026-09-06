@@ -1,5 +1,5 @@
 import Avatar from "@/components/ui/Avatar";
-import type { PresenceUser } from "@/data/fixtures";
+import type { PresenceUser } from "@/realtime/socket";
 
 const MAX_VISIBLE = 3;
 
@@ -8,10 +8,6 @@ interface PresenceBarProps {
 }
 
 export default function PresenceBar({ users }: PresenceBarProps) {
-  if (users.length === 0) {
-    return null;
-  }
-
   const visible = users.slice(0, MAX_VISIBLE);
   const hidden = users.length - visible.length;
 
@@ -20,7 +16,8 @@ export default function PresenceBar({ users }: PresenceBarProps) {
       <div className="flex -space-x-1.5">
         {visible.map((user) => (
           <span
-            key={user.userId}
+            key={user.id}
+            title={user.name}
             className="inline-flex rounded-full outline-2 outline-surface"
           >
             <Avatar name={user.name} color={user.avatarColor} />
@@ -40,9 +37,7 @@ export default function PresenceBar({ users }: PresenceBarProps) {
         )}
       </div>
 
-      <span className="text-sm text-ink-muted">
-        {users.length} viewing
-      </span>
+      <span className="text-sm text-ink-muted">{users.length} viewing</span>
     </div>
   );
 }
