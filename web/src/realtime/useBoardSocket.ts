@@ -1,7 +1,8 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { patchBoard } from "@/boards/useBoard";
-import { socket, type BoardState } from "@/realtime/socket";
+import { applyBoardEvent } from "@/realtime/applyBoardEvent";
+import { socket, type BoardEvent, type BoardState } from "@/realtime/socket";
 
 export type SocketStatus = "connecting" | "live" | "offline";
 
@@ -40,10 +41,15 @@ export function useBoardSocket(boardId: string | undefined) {
       setError(payload.message);
     }
 
+    function handleEvent(event: BoardEvent) {
+      applyBoardEvent(client, event);
+    }
+
     socket.on("connect", join);
     socket.on("disconnect", handleDisconnect);
     socket.on("connect_error", handleConnectError);
     socket.on("board:state", handleState);
+    socket.on("board:event", handleEvent);
     socket.on("board:error", handleBoardError);
 
     if (socket.connected) {
@@ -62,6 +68,7 @@ export function useBoardSocket(boardId: string | undefined) {
       socket.off("disconnect", handleDisconnect);
       socket.off("connect_error", handleConnectError);
       socket.off("board:state", handleState);
+      socket.off("board:event", handleEvent);
       socket.off("board:error", handleBoardError);
     };
   }, [boardId, client]);
