@@ -8,6 +8,7 @@ import {
   type BoardState,
   type PresenceUser,
 } from "@/realtime/socket";
+import type { Role } from "@/workspaces/useWorkspaces";
 
 export type SocketStatus = "connecting" | "live" | "offline";
 
@@ -23,6 +24,7 @@ export function useBoardSocket(boardId: string | undefined) {
   );
   const [error, setError] = useState<string | null>(null);
   const [presence, setPresence] = useState<PresenceUser[]>([]);
+  const [role, setRole] = useState<Role | null>(null);
   const [cursors, setCursors] = useState<Record<string, Cursor>>({});
   const [editingCards, setEditingCards] = useState<Record<string, string>>({});
 
@@ -58,6 +60,7 @@ export function useBoardSocket(boardId: string | undefined) {
 
     function handleState(state: BoardState) {
       setPresence(state.presence);
+      setRole(state.role);
 
       if (state.resyncRequired) {
         void client.invalidateQueries({
@@ -161,8 +164,9 @@ export function useBoardSocket(boardId: string | undefined) {
       setPresence([]);
       setCursors({});
       setEditingCards({});
+      setRole(null);
     };
   }, [boardId, client]);
 
-  return { status, error, presence, cursors, editingCards };
+  return { status, error, role, presence, cursors, editingCards };
 }

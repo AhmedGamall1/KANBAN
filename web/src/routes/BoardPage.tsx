@@ -49,7 +49,8 @@ export default function BoardPage() {
   const moveCard = useMoveCard(boardId ?? "");
   const snapshot = useRef<BoardData | null>(null);
 
-  const { status, presence, cursors, editingCards } = useBoardSocket(boardId);
+  const { status, role, presence, cursors, editingCards } =
+    useBoardSocket(boardId);
   const surface = useRef<HTMLDivElement>(null);
   const lastCursorAt = useRef(0);
 
@@ -69,7 +70,9 @@ export default function BoardPage() {
     );
   }
 
-  const canEdit = workspace ? workspace.role !== "viewer" : false;
+  const knownRoles = [role, workspace?.role].filter(Boolean);
+  const canEdit =
+    knownRoles.length > 0 && knownRoles.every((known) => known !== "viewer");
 
   const boardColumns = data.columnOrder.map((id) => data.columnsById[id]);
 
