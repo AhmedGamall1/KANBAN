@@ -1,6 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { patchBoard } from "@/boards/useBoard";
+import { boardQueryKey, patchBoard, type BoardData } from "@/boards/useBoard";
 import { applyBoardEvent } from "@/realtime/applyBoardEvent";
 import {
   socket,
@@ -32,9 +32,16 @@ export function useBoardSocket(boardId: string | undefined) {
     }
 
     function join() {
+      const board = client.getQueryData<BoardData>(
+        boardQueryKey(boardId as string),
+      );
+
       setStatus("live");
       setError(null);
-      socket.emit("board:join", { boardId: boardId as string });
+      socket.emit("board:join", {
+        boardId: boardId as string,
+        after: board?.seq,
+      });
     }
 
     function handleDisconnect() {
@@ -51,7 +58,24 @@ export function useBoardSocket(boardId: string | undefined) {
 
     function handleState(state: BoardState) {
       setPresence(state.presence);
-      patchBoard(client, state.boardId, (data) => ({ ...data, seq: state.seq }));
+
+      if (state.resyncRequired) {
+        void client.invalidateQueries({
+          queryKey: boardQueryKey(state.boardId),
+        });
+
+        return;
+      }
+
+      for (const event of state.missed) {
+        applyBoardEvent(client, event);
+      }
+
+      patchBoard(client, state.boardId, (data) =>
+        Number(state.seq) > Number(data.seq)
+          ? { ...data, seq: state.seq }
+          : data,
+      );
     }
 
     function handlePresence(payload: { users: PresenceUser[] }) {

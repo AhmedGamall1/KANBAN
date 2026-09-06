@@ -14,6 +14,7 @@ import { useCreateCard, useMoveCard } from "@/boards/useCards";
 import { useCreateColumn, useMoveColumn } from "@/boards/useColumns";
 import BoardColumn from "@/components/board/BoardColumn";
 import CardDrawer from "@/components/board/CardDrawer";
+import ConnectionStatus from "@/components/board/ConnectionStatus";
 import CursorLayer from "@/components/board/CursorLayer";
 import PresenceBar from "@/components/board/PresenceBar";
 import Button from "@/components/ui/Button";
@@ -48,7 +49,7 @@ export default function BoardPage() {
   const moveCard = useMoveCard(boardId ?? "");
   const snapshot = useRef<BoardData | null>(null);
 
-  const { presence, cursors, editingCards } = useBoardSocket(boardId);
+  const { status, presence, cursors, editingCards } = useBoardSocket(boardId);
   const surface = useRef<HTMLDivElement>(null);
   const lastCursorAt = useRef(0);
 
@@ -206,6 +207,8 @@ export default function BoardPage() {
           <h1 className="min-w-0 flex-1 truncate text-lg font-semibold tracking-tight text-ink">
             {data.board.name}
           </h1>
+
+          <ConnectionStatus status={status} />
 
           <PresenceBar users={presence} />
 

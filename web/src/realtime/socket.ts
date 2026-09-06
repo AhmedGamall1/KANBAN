@@ -15,6 +15,7 @@ export interface BoardState {
   role: Role;
   seq: string;
   presence: PresenceUser[];
+  missed: BoardEvent[];
   resyncRequired: boolean;
 }
 
