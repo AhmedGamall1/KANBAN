@@ -12,8 +12,10 @@ interface ProviderConfig {
     authorizeUrl: string;
     tokenUrl: string;
     scope: string;
+    params?: Record<string, string>;
     fetchProfile(accessToken: string): Promise<OAuthProfile>;
 }
+
 
 async function getJson<T>(url: string, accessToken: string): Promise<T> {
     const response = await fetch(url, {
@@ -36,6 +38,7 @@ export const PROVIDERS: Record<Provider, ProviderConfig> = {
         authorizeUrl: 'https://accounts.google.com/o/oauth2/v2/auth',
         tokenUrl: 'https://oauth2.googleapis.com/token',
         scope: 'openid email profile',
+        params: { prompt: 'select_account' },
         async fetchProfile(accessToken) {
             const profile = await getJson<{
                 sub: string;

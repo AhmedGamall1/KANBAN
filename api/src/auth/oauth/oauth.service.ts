@@ -58,6 +58,11 @@ export class OauthService {
         url.searchParams.set('scope', PROVIDERS[provider].scope);
         url.searchParams.set('state', state);
 
+        for (const [key, value] of Object.entries(PROVIDERS[provider].params ?? {})) {
+            url.searchParams.set(key, value);
+        }
+
+
         return url.toString();
     }
 
