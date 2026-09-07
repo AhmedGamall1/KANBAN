@@ -82,7 +82,12 @@ export default function BoardCard({
 
       {assignee && (
         <div className="mt-2.5 flex justify-end">
-          <Avatar name={assignee.name} color={assignee.avatarColor} size="sm" />
+          <Avatar
+            name={assignee.name}
+            src={assignee.avatarUrl}
+            color={assignee.avatarColor}
+            size="sm"
+          />
         </div>
       )}
     </button>

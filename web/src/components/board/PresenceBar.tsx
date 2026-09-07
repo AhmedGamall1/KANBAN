@@ -20,7 +20,11 @@ export default function PresenceBar({ users }: PresenceBarProps) {
             title={user.name}
             className="inline-flex rounded-full outline-2 outline-surface"
           >
-            <Avatar name={user.name} color={user.avatarColor} />
+            <Avatar
+              name={user.name}
+              src={user.avatarUrl}
+              color={user.avatarColor}
+            />
           </span>
         ))}
 

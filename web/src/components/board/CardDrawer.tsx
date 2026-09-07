@@ -280,6 +280,7 @@ export default function CardDrawer({
                   <li key={entry.seq} className="flex gap-2.5">
                     <Avatar
                       name={entry.actor.name}
+                      src={entry.actor.avatarUrl}
                       color={entry.actor.avatarColor}
                       size="sm"
                     />

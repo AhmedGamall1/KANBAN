@@ -62,7 +62,11 @@ export default function Sidebar() {
 
       {user && (
         <div className="flex items-center gap-2 border-t border-line p-3">
-          <Avatar name={user.name} color={user.avatarColor} />
+          <Avatar
+            name={user.name}
+            src={user.avatarUrl}
+            color={user.avatarColor}
+          />
           <span className="min-w-0 flex-1">
             <span className="block truncate font-medium text-ink">
               {user.name}

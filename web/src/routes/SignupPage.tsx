@@ -1,6 +1,7 @@
 import type { SubmitEvent } from "react";
 import { Link, Navigate, useLocation } from "react-router";
 import { useAuth, useSignup } from "@/auth/useAuth";
+import ProviderButtons from "@/components/auth/ProviderButtons";
 import Button from "@/components/ui/Button";
 import TextField from "@/components/ui/TextField";
 import AuthLayout from "@/layouts/AuthLayout";
@@ -92,6 +93,8 @@ export default function SignupPage() {
           {signup.isPending ? "Creating account…" : "Create account"}
         </Button>
       </form>
+
+      <ProviderButtons next={state?.from} />
     </AuthLayout>
   );
 }

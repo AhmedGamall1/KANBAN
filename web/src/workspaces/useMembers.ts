@@ -7,6 +7,7 @@ export interface Member {
   name: string;
   email: string;
   avatarColor: string;
+  avatarUrl: string | null;
   role: Role;
   joinedAt: string;
 }

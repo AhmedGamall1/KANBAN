@@ -8,6 +8,7 @@ export interface PresenceUser {
   id: string;
   name: string;
   avatarColor: string;
+  avatarUrl: string | null;
 }
 
 export interface BoardState {

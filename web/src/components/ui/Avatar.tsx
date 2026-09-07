@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 type AvatarSize = "sm" | "md" | "lg";
 type AvatarShape = "circle" | "square";
 
@@ -24,6 +26,7 @@ function initialsOf(name: string): string {
 
 interface AvatarProps {
   name: string;
+  src?: string | null;
   color?: string;
   size?: AvatarSize;
   shape?: AvatarShape;
@@ -31,10 +34,31 @@ interface AvatarProps {
 
 export default function Avatar({
   name,
+  src,
   color,
   size = "md",
   shape = "circle",
 }: AvatarProps) {
+  const [broken, setBroken] = useState(false);
+
+  if (src && !broken) {
+    return (
+      <img
+        src={src}
+        alt={name}
+        title={name}
+        loading="lazy"
+        referrerPolicy="no-referrer"
+        onError={() => setBroken(true)}
+        className={[
+          "inline-block shrink-0 object-cover",
+          sizeClasses[size],
+          shapeClasses[shape],
+        ].join(" ")}
+      />
+    );
+  }
+
   return (
     <span
       className={[

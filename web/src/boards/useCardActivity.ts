@@ -12,7 +12,12 @@ export interface CardChanges {
 export type ActivityEntry = {
   seq: string;
   createdAt: string;
-  actor: { id: string; name: string; avatarColor: string };
+  actor: {
+    id: string;
+    name: string;
+    avatarColor: string;
+    avatarUrl: string | null;
+  };
 } & (
   | { type: "card_created"; payload: { cardId: string } }
   | { type: "card_updated"; payload: { cardId: string; changes: CardChanges } }

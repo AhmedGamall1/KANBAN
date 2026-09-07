@@ -135,6 +135,7 @@ export default function MembersPage() {
               <li key={member.userId} className="flex items-center gap-3 py-3">
                 <Avatar
                   name={member.name}
+                  src={member.avatarUrl}
                   color={member.avatarColor}
                   size="lg"
                 />
