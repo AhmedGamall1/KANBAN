@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseService, type Queryable } from '../database/database.service';
 import type { Role } from '../access/access.repository';
-
 export type { Role };
 
 export interface Member {
@@ -9,6 +8,7 @@ export interface Member {
     name: string;
     email: string;
     avatarColor: string;
+    avatarUrl: string | null
     role: Role;
     joinedAt: Date;
 }
@@ -18,6 +18,7 @@ interface MemberRow {
     name: string;
     email: string;
     avatar_color: string;
+    avatar_url: string | null
     role: Role;
     joined_at: Date;
 }
@@ -28,13 +29,14 @@ function toMember(row: MemberRow): Member {
         name: row.name,
         email: row.email,
         avatarColor: row.avatar_color,
+        avatarUrl: row.avatar_url,
         role: row.role,
         joinedAt: row.joined_at,
     };
 }
 
 const MEMBER_COLUMNS = `
-  m.user_id, u.name, u.email, u.avatar_color, m.role, m.joined_at
+  m.user_id, u.name, u.email, u.avatar_color, u.avatar_url, m.role, m.joined_at
 `;
 
 @Injectable()

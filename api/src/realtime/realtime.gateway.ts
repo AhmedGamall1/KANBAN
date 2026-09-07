@@ -28,6 +28,7 @@ export interface PresenceUser {
     id: string;
     name: string;
     avatarColor: string;
+    avatarUrl: string | null
 }
 
 const boardRoom = (boardId: string): string => `board:${boardId}`;
@@ -121,6 +122,7 @@ export class RealtimeGateway
                     id: user.id,
                     name: user.name,
                     avatarColor: user.avatarColor,
+                    avatarUrl: user.avatarUrl,
                 });
             }
         }

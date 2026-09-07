@@ -18,6 +18,7 @@ import { signupSchema, type SignupDto } from './dto/signup.dto';
 import { CurrentUser } from '../common/current-user.decorator';
 import type { User } from '../users/users.repository';
 import { Public } from '../common/public.decorator';
+import { sessionCookieOptions } from './session-cookie';
 
 @Controller('auth')
 export class AuthController {
@@ -27,13 +28,9 @@ export class AuthController {
     ) { }
 
     private cookieOptions(): CookieOptions {
-        return {
-            httpOnly: true,
-            sameSite: 'lax',
-            secure: this.config.get('NODE_ENV', { infer: true }) === 'production',
-            path: '/',
-            maxAge: SESSION_TTL_DAYS * 24 * 60 * 60 * 1000,
-        };
+        return sessionCookieOptions(
+            this.config.get('NODE_ENV', { infer: true }) === 'production',
+        );
     }
 
     @Public()

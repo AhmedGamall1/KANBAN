@@ -32,6 +32,10 @@ function isUniqueViolation(error: unknown): boolean {
     );
 }
 
+export function randomAvatarColor(): string {
+    return AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)];
+}
+
 @Injectable()
 export class AuthService {
     constructor(
@@ -44,8 +48,7 @@ export class AuthService {
     async signup(dto: SignupDto): Promise<{ user: User, token: string }> {
         const passwordHash = await argon2.hash(dto.password)
 
-        const avatarColor =
-            AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)];
+        const avatarColor = randomAvatarColor()
 
         let user: User
 
@@ -76,7 +79,9 @@ export class AuthService {
             throw new UnauthorizedException('Invalid email or password');
         }
 
-        const valid = await argon2.verify(found.passwordHash, dto.password);
+        const valid =
+            found.passwordHash !== null &&
+            (await argon2.verify(found.passwordHash, dto.password));
 
         if (!valid) {
             throw new UnauthorizedException('Invalid email or password');
@@ -93,7 +98,7 @@ export class AuthService {
         return this.sessions.findUserByTokenHash(hashToken(token))
     }
 
-    private async createSession(userId: string): Promise<string> {
+    async createSession(userId: string): Promise<string> {
         const token = randomBytes(32).toString('base64url');
         const expiresAt = new Date(
             Date.now() + SESSION_TTL_DAYS * 24 * 60 * 60 * 1000,

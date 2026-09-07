@@ -48,12 +48,13 @@ export interface ActivityEntry {
     type: EventType;
     payload: Record<string, unknown>;
     createdAt: Date;
-    actor: { id: string; name: string; avatarColor: string };
+    actor: { id: string; name: string; avatarColor: string; };
 }
 
 interface ActivityRow extends BoardEventRow {
     actor_name: string;
     actor_avatar_color: string;
+    actor_avatar_url: string | null
 }
 
 @Injectable()
@@ -117,12 +118,13 @@ export class EventsRepository {
         limit: number,
     ): Promise<ActivityEntry[]> {
         const { rows } = await this.db.query<ActivityRow>(
-            `SELECT e.*, u.name AS actor_name, u.avatar_color AS actor_avatar_color
-         FROM board_events e
-         JOIN users u ON u.id = e.actor_id
-        WHERE e.payload->>'cardId' = $1
-        ORDER BY e.seq DESC
-        LIMIT $2`,
+            `SELECT e.*, u.name AS actor_name, u.avatar_color
+            AS actor_avatar_color,u.avatar_url AS actor_avatar_url
+            FROM board_events e
+            JOIN users u ON u.id = e.actor_id
+            WHERE e.payload->>'cardId' = $1
+            ORDER BY e.seq DESC
+            LIMIT $2`,
             [cardId, limit],
         );
 
@@ -135,6 +137,7 @@ export class EventsRepository {
                 id: row.actor_id,
                 name: row.actor_name,
                 avatarColor: row.actor_avatar_color,
+                avatarUrl: row.actor_avatar_url
             },
         }));
     }
