@@ -48,7 +48,7 @@ export interface ActivityEntry {
     type: EventType;
     payload: Record<string, unknown>;
     createdAt: Date;
-    actor: { id: string; name: string; avatarColor: string; };
+    actor: { id: string; name: string; avatarColor: string; avatarUrl: string | null };
 }
 
 interface ActivityRow extends BoardEventRow {
