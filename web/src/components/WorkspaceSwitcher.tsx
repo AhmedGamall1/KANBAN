@@ -24,7 +24,7 @@ interface WorkspaceSwitcherProps {
 export default function WorkspaceSwitcher({
   workspace,
 }: WorkspaceSwitcherProps) {
-  const { data: workspaces } = useWorkspaces();
+  const { data: workspaces, isPending } = useWorkspaces();
   const createWorkspace = useCreateWorkspace();
   const [open, setOpen] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -63,7 +63,7 @@ export default function WorkspaceSwitcher({
   }
 
   return (
-    <div ref={containerRef} className="relative border-b border-line">
+    <div ref={containerRef} className="relative min-w-0 flex-1">
       <button
         type="button"
         onClick={() => setOpen((previous) => !previous)}
@@ -73,10 +73,10 @@ export default function WorkspaceSwitcher({
         <Avatar name={workspace?.name ?? "?"} size="lg" shape="square" />
         <span className="min-w-0 flex-1">
           <span className="block truncate font-medium text-ink">
-            {workspace?.name ?? "Loading…"}
+            {workspace?.name ?? (isPending ? "Loading…" : "No workspace")}
           </span>
           <span className="block text-xs capitalize text-ink-muted">
-            {workspace?.role ?? ""}
+            {workspace?.role ?? (isPending ? "" : "Create one to begin")}
           </span>
         </span>
         <ChevronDownIcon
@@ -88,9 +88,11 @@ export default function WorkspaceSwitcher({
 
       {open && (
         <div className="absolute top-full right-2 left-2 z-10 mt-1 rounded-card border border-line-strong bg-surface p-1">
-          <p className="px-2 py-1.5 text-xs font-medium text-ink-faint">
-            Your workspaces
-          </p>
+          {(workspaces ?? []).length > 0 && (
+            <p className="px-2 py-1.5 text-xs font-medium text-ink-faint">
+              Your workspaces
+            </p>
+          )}
 
           <ul className="flex flex-col gap-0.5">
             {(workspaces ?? []).map((item) => (
@@ -115,7 +117,9 @@ export default function WorkspaceSwitcher({
             ))}
           </ul>
 
-          <div className="my-1 border-t border-line" />
+          {(workspaces ?? []).length > 0 && (
+            <div className="my-1 border-t border-line" />
+          )}
 
           <button
             type="button"

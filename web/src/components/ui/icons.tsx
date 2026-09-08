@@ -137,6 +137,23 @@ export function TrashIcon({ className = "h-4 w-4 shrink-0" }: IconProps) {
   );
 }
 
+export function SidebarIcon({ className = "h-4 w-4 shrink-0" }: IconProps) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <rect x="2" y="2.75" width="12" height="10.5" rx="1.5" />
+      <path d="M6.25 2.75v10.5" />
+    </svg>
+  );
+}
+
 export function SunIcon({ className = "h-4 w-4 shrink-0" }: IconProps) {
   return (
     <svg

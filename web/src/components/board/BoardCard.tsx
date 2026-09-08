@@ -62,33 +62,43 @@ export default function BoardCard({
         isDragging ? "opacity-40" : "",
       ].join(" ")}
     >
-      {card.label && (
-        <p className="mb-1.5 flex items-center gap-1.5 text-xs text-ink-muted">
-          <span
-            className={`h-2 w-2 shrink-0 rounded-full ${labelDotClasses[card.label]}`}
-          />
-          {card.label}
-        </p>
+      {(card.label || assignee) && (
+        <div className="mb-1.5 flex items-center gap-2">
+          {card.label && (
+            <span className="flex min-w-0 items-center gap-1.5 text-xs text-ink-muted">
+              <span
+                className={`h-2 w-2 shrink-0 rounded-full ${labelDotClasses[card.label]}`}
+              />
+              <span className="truncate">{card.label}</span>
+            </span>
+          )}
+
+          {assignee && (
+            <span className="ml-auto">
+              <Avatar
+                name={assignee.name}
+                src={assignee.avatarUrl}
+                color={assignee.avatarColor}
+                size="sm"
+              />
+            </span>
+          )}
+        </div>
       )}
 
-      <p className="text-ink">{card.title}</p>
+      <p className="font-medium text-ink">{card.title}</p>
+
+      {card.description && (
+        <p className="mt-1 line-clamp-1 text-sm text-ink-muted">
+          {card.description}
+        </p>
+      )}
 
       {editor && (
         <p className="mt-2 flex items-center gap-1.5 text-xs text-brand">
           <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-brand" />
-          {editor.name} is editing
+          <span className="truncate">{editor.name} is editing</span>
         </p>
-      )}
-
-      {assignee && (
-        <div className="mt-2.5 flex justify-end">
-          <Avatar
-            name={assignee.name}
-            src={assignee.avatarUrl}
-            color={assignee.avatarColor}
-            size="sm"
-          />
-        </div>
       )}
     </button>
   );

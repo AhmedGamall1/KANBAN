@@ -3,7 +3,12 @@ import { useAuth, useLogout } from "@/auth/useAuth";
 import ThemeToggle from "@/components/ThemeToggle";
 import WorkspaceSwitcher from "@/components/WorkspaceSwitcher";
 import Avatar from "@/components/ui/Avatar";
-import { BoardIcon, LogOutIcon, MembersIcon } from "@/components/ui/icons";
+import {
+  BoardIcon,
+  LogOutIcon,
+  MembersIcon,
+  SidebarIcon,
+} from "@/components/ui/icons";
 import { useBoard } from "@/boards/useBoard";
 import { useBoards } from "@/boards/useBoards";
 import { useWorkspace } from "@/workspaces/useWorkspaces";
@@ -19,7 +24,11 @@ function navLinkClasses({ isActive }: { isActive: boolean }): string {
   ].join(" ");
 }
 
-export default function Sidebar() {
+interface SidebarProps {
+  onCollapse: () => void;
+}
+
+export default function Sidebar({ onCollapse }: SidebarProps) {
   const { user } = useAuth();
   const logout = useLogout();
   const navigate = useNavigate();
@@ -32,7 +41,19 @@ export default function Sidebar() {
 
   return (
     <aside className="flex w-64 shrink-0 flex-col border-r border-line bg-surface">
-      <WorkspaceSwitcher workspace={workspace} />
+      <div className="flex items-center gap-1 border-b border-line pr-2">
+        <WorkspaceSwitcher workspace={workspace} />
+
+        <button
+          type="button"
+          aria-label="Hide sidebar"
+          title="Hide sidebar"
+          onClick={onCollapse}
+          className="shrink-0 rounded-control p-1.5 text-ink-faint transition-colors hover:bg-subtle hover:text-ink"
+        >
+          <SidebarIcon />
+        </button>
+      </div>
 
       <nav className="flex-1 overflow-y-auto p-3">
         <p className="px-2 pb-1.5 text-xs font-medium text-ink-faint">Boards</p>
