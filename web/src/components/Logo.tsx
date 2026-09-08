@@ -6,7 +6,7 @@ export default function Logo({ markOnly = false }: LogoProps) {
   return (
     <span className="inline-flex items-center gap-2">
       <span
-        className="flex h-7 w-7 items-center justify-center rounded-md bg-brand text-white"
+        className="flex h-7 w-7 items-center justify-center rounded-md bg-brand text-on-brand"
         aria-hidden="true"
       >
         <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">

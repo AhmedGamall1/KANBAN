@@ -153,7 +153,7 @@ export default function CardDrawer({
           onClose();
         }
       }}
-      className="fixed inset-y-0 right-0 m-0 max-h-none w-full max-w-md border-l border-line bg-surface p-0 text-ink backdrop:bg-ink/20"
+      className="fixed inset-y-0 right-0 m-0 max-h-none w-full max-w-md border-l border-line bg-surface p-0 text-ink backdrop:bg-scrim"
     >
       <div className="flex h-full flex-col">
         <header className="flex shrink-0 items-start gap-3 border-b border-line px-5 py-4">

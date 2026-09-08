@@ -1,5 +1,6 @@
 import { NavLink, useNavigate, useParams } from "react-router";
 import { useAuth, useLogout } from "@/auth/useAuth";
+import ThemeToggle from "@/components/ThemeToggle";
 import WorkspaceSwitcher from "@/components/WorkspaceSwitcher";
 import Avatar from "@/components/ui/Avatar";
 import { BoardIcon, LogOutIcon, MembersIcon } from "@/components/ui/icons";
@@ -59,6 +60,10 @@ export default function Sidebar() {
           </NavLink>
         )}
       </nav>
+
+      <div className="border-t border-line p-3">
+        <ThemeToggle />
+      </div>
 
       {user && (
         <div className="flex items-center gap-2 border-t border-line p-3">

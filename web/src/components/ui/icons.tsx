@@ -137,6 +137,39 @@ export function TrashIcon({ className = "h-4 w-4 shrink-0" }: IconProps) {
   );
 }
 
+export function SunIcon({ className = "h-4 w-4 shrink-0" }: IconProps) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      aria-hidden="true"
+    >
+      <circle cx="8" cy="8" r="3" />
+      <path d="M8 1.5v1.5M8 13v1.5M14.5 8H13M3 8H1.5M12.6 3.4l-1 1M4.4 11.6l-1 1M12.6 12.6l-1-1M4.4 4.4l-1-1" />
+    </svg>
+  );
+}
+
+export function MoonIcon({ className = "h-4 w-4 shrink-0" }: IconProps) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M13.5 9.6A5.8 5.8 0 0 1 6.4 2.5a5.8 5.8 0 1 0 7.1 7.1z" />
+    </svg>
+  );
+}
+
 export function GoogleIcon({ className = "h-4 w-4 shrink-0" }: IconProps) {
   return (
     <svg className={className} viewBox="0 0 18 18" aria-hidden="true">

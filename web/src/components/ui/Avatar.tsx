@@ -69,7 +69,9 @@ export default function Avatar({
       ].join(" ")}
       style={
         color
-          ? { backgroundColor: `color-mix(in oklab, ${color} 20%, white)` }
+          ? {
+              backgroundColor: `color-mix(in oklab, ${color} 25%, var(--color-surface))`,
+            }
           : undefined
       }
       title={name}

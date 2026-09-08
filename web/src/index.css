@@ -1,5 +1,7 @@
 @import 'tailwindcss';
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --font-sans:
     -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue',
@@ -23,6 +25,10 @@
   --color-danger-soft: #ffeceb;
   --color-success: #216e4e;
 
+  --color-on-brand: #ffffff;
+  --color-on-danger: #ffffff;
+  --color-scrim: rgb(23 43 77 / 0.2);
+
   --color-label-infra: #8270db;
   --color-label-db: #e56910;
   --color-label-frontend: #1f845a;
@@ -34,6 +40,42 @@
 }
 
 @layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  .dark {
+    color-scheme: dark;
+
+    --color-canvas: #0b0e12;
+    --color-surface: #14181e;
+    --color-subtle: #1b2027;
+    --color-line: #262c35;
+    --color-line-strong: #39424e;
+
+    --color-ink: #e9edf3;
+    --color-ink-muted: #a4b0bf;
+    --color-ink-faint: #76828f;
+
+    --color-brand: #4c8dff;
+    --color-brand-hover: #74a6ff;
+    --color-brand-soft: #17243c;
+
+    --color-danger: #ff7a70;
+    --color-danger-soft: #35201e;
+    --color-success: #4fd6a0;
+
+    --color-on-brand: #08101f;
+    --color-on-danger: #2a1210;
+    --color-scrim: rgb(2 4 8 / 0.65);
+
+    --color-label-infra: #a996f5;
+    --color-label-db: #f79f52;
+    --color-label-frontend: #52d6a0;
+    --color-label-bug: #ff7a70;
+    --color-label-chore: #a4b0bf;
+  }
+
   html {
     font-size: 14px;
   }

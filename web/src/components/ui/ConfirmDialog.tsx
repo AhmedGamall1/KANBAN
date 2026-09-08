@@ -35,7 +35,7 @@ export default function ConfirmDialog({
           onClose();
         }
       }}
-      className="m-auto w-full max-w-sm rounded-card border border-line bg-surface p-0 text-ink backdrop:bg-ink/20"
+      className="m-auto w-full max-w-sm rounded-card border border-line bg-surface p-0 text-ink backdrop:bg-scrim"
     >
       <div className="p-5">
         <h2 className="text-lg font-semibold tracking-tight text-ink">
