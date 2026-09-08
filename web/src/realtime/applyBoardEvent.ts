@@ -102,7 +102,10 @@ function reduce(data: BoardData, event: BoardEvent): BoardData {
           [...data.columnOrder.filter((id) => id !== column.id), column.id],
           columnsById,
         ),
-        cardOrder: { ...data.cardOrder, [column.id]: [] },
+        cardOrder: {
+          ...data.cardOrder,
+          [column.id]: data.cardOrder[column.id] ?? [],
+        },
       };
     }
 

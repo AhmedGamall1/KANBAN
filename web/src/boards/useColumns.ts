@@ -18,8 +18,14 @@ export function useCreateColumn(boardId: string) {
       patchBoard(client, boardId, (data) => ({
         ...data,
         columnsById: { ...data.columnsById, [column.id]: column },
-        columnOrder: [...data.columnOrder, column.id],
-        cardOrder: { ...data.cardOrder, [column.id]: [] },
+        columnOrder: [
+          ...data.columnOrder.filter((id) => id !== column.id),
+          column.id,
+        ],
+        cardOrder: {
+          ...data.cardOrder,
+          [column.id]: data.cardOrder[column.id] ?? [],
+        },
       }));
     },
   });

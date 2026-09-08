@@ -26,7 +26,12 @@ export function useCreateCard(boardId: string) {
         cardsById: { ...data.cardsById, [card.id]: card },
         cardOrder: {
           ...data.cardOrder,
-          [card.columnId]: [...(data.cardOrder[card.columnId] ?? []), card.id],
+          [card.columnId]: [
+            ...(data.cardOrder[card.columnId] ?? []).filter(
+              (id) => id !== card.id,
+            ),
+            card.id,
+          ],
         },
       }));
     },
