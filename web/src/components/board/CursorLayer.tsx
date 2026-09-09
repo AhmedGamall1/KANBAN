@@ -19,7 +19,7 @@ export default function CursorLayer({ cursors, presence }: CursorLayerProps) {
         return (
           <div
             key={user.id}
-            className="absolute -translate-y-0.5"
+            className="absolute -translate-y-0.5 transition-[left,top] duration-75 ease-linear"
             style={{ left: `${cursor.x * 100}%`, top: `${cursor.y * 100}%` }}
           >
             <svg

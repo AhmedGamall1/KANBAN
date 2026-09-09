@@ -1,7 +1,7 @@
 import { move } from "@dnd-kit/helpers";
 import { DragDropProvider } from "@dnd-kit/react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import {
   boardQueryKey,
@@ -28,6 +28,8 @@ import { useBoardSocket } from "@/realtime/useBoardSocket";
 import { useMembers, type Member } from "@/workspaces/useMembers";
 import { useWorkspace } from "@/workspaces/useWorkspaces";
 
+const CURSOR_INTERVAL = 50;
+
 export default function BoardPage() {
   const { boardId } = useParams();
   const navigate = useNavigate();
@@ -53,6 +55,17 @@ export default function BoardPage() {
     useBoardSocket(boardId);
   const surface = useRef<HTMLDivElement>(null);
   const lastCursorAt = useRef(0);
+  const pendingCursor = useRef<{ x: number; y: number } | null>(null);
+  const cursorTimer = useRef<number | null>(null);
+
+  useEffect(
+    () => () => {
+      if (cursorTimer.current !== null) {
+        window.clearTimeout(cursorTimer.current);
+      }
+    },
+    [],
+  );
 
   if (isPending) {
     return <Spinner />;
@@ -103,20 +116,37 @@ export default function BoardPage() {
     );
   }
 
-  function trackCursor(event: { clientX: number; clientY: number }) {
-    const box = surface.current?.getBoundingClientRect();
-    const now = Date.now();
+  function flushCursor() {
+    cursorTimer.current = null;
 
-    if (!box || box.width === 0 || now - lastCursorAt.current < 50) {
+    if (!pendingCursor.current) {
       return;
     }
 
-    lastCursorAt.current = now;
+    socket.emit("cursor:move", pendingCursor.current);
+    pendingCursor.current = null;
+    lastCursorAt.current = Date.now();
+  }
 
-    socket.emit("cursor:move", {
+  function trackCursor(event: { clientX: number; clientY: number }) {
+    const box = surface.current?.getBoundingClientRect();
+
+    if (!box || box.width === 0 || box.height === 0) {
+      return;
+    }
+
+    pendingCursor.current = {
       x: Math.min(1, Math.max(0, (event.clientX - box.left) / box.width)),
       y: Math.min(1, Math.max(0, (event.clientY - box.top) / box.height)),
-    });
+    };
+
+    const wait = CURSOR_INTERVAL - (Date.now() - lastCursorAt.current);
+
+    if (wait <= 0) {
+      flushCursor();
+    } else if (cursorTimer.current === null) {
+      cursorTimer.current = window.setTimeout(flushCursor, wait);
+    }
   }
 
   function currentBoard() {
@@ -274,8 +304,12 @@ export default function BoardPage() {
             className="flex-1 overflow-x-auto p-6"
             onPointerMove={trackCursor}
           >
-            <div ref={surface} className="relative flex h-full items-start gap-3">
-              {boardColumns.map((column, columnIndex) => (
+            <div className="flex h-full items-start gap-3">
+              <div
+                ref={surface}
+                className="relative flex h-full w-max items-start gap-3"
+              >
+                {boardColumns.map((column, columnIndex) => (
                 <BoardColumn
                   key={column.id}
                   column={column}
@@ -302,7 +336,10 @@ export default function BoardPage() {
                   }
                   onOpenCard={setOpenCardId}
                 />
-              ))}
+                ))}
+
+                <CursorLayer cursors={cursors} presence={presence} />
+              </div>
 
               {canEdit && (
                 <button
@@ -317,8 +354,6 @@ export default function BoardPage() {
                   Add a column
                 </button>
               )}
-
-              <CursorLayer cursors={cursors} presence={presence} />
             </div>
           </div>
         )}
