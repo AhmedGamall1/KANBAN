@@ -3,15 +3,17 @@ import { join } from 'node:path';
 import { config as loadEnv } from 'dotenv';
 import { Client } from 'pg';
 
-loadEnv();
-
 const MIGRATIONS_DIR = join(__dirname, '..', 'migrations');
 const LOCK_ID = 918_273_645;
 
-async function main(): Promise<void> {
-    const client = new Client({
-        connectionString: process.env.MIGRATION_DATABASE_URL,
-    });
+export async function migrate(
+    connectionString: string,
+    options: { quiet?: boolean } = {},
+): Promise<void> {
+    const log = options.quiet ? () => { } : (text: string) => console.log(text);
+    const write = options.quiet ? () => { } : (text: string) => process.stdout.write(text);
+
+    const client = new Client({ connectionString });
     await client.connect();
 
     try {
@@ -35,13 +37,13 @@ async function main(): Promise<void> {
             .filter((file) => !applied.has(file));
 
         if (pending.length === 0) {
-            console.log('No pending migrations.');
+            log('No pending migrations.');
             return;
         }
 
         for (const file of pending) {
             const sql = readFileSync(join(MIGRATIONS_DIR, file), 'utf8');
-            process.stdout.write(`Applying ${file} ... `);
+            write(`Applying ${file} ... `);
 
             try {
                 await client.query('BEGIN');
@@ -50,10 +52,10 @@ async function main(): Promise<void> {
                     file,
                 ]);
                 await client.query('COMMIT');
-                console.log('ok');
+                log('ok');
             } catch (error) {
                 await client.query('ROLLBACK');
-                console.log('failed');
+                log('failed');
                 throw error;
             }
         }
@@ -63,7 +65,18 @@ async function main(): Promise<void> {
     }
 }
 
-main().catch((error: unknown) => {
-    console.error(error);
-    process.exit(1);
-});
+if (require.main === module) {
+    loadEnv();
+
+    const url = process.env.MIGRATION_DATABASE_URL;
+
+    if (!url) {
+        console.error('MIGRATION_DATABASE_URL is not set');
+        process.exit(1);
+    }
+
+    migrate(url).catch((error: unknown) => {
+        console.error(error);
+        process.exit(1);
+    });
+}
