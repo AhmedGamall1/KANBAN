@@ -26,7 +26,9 @@ export function ownerPool(): Pool {
     return owner;
 }
 
-export async function createTestApp(): Promise<INestApplication> {
+export async function createTestApp(
+    options: { listen?: boolean } = {},
+): Promise<INestApplication> {
     const moduleRef = await Test.createTestingModule({
         imports: [AppModule],
     }).compile();
@@ -35,7 +37,11 @@ export async function createTestApp(): Promise<INestApplication> {
 
     app.use(cookieParser());
 
-    await app.init();
+    if (options.listen) {
+        await app.listen(0, '127.0.0.1');
+    } else {
+        await app.init();
+    }
 
     return app;
 }
