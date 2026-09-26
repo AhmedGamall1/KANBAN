@@ -1,0 +1,9 @@
+**/node_modules
+**/dist
+**/.env
+.git
+.gitignore
+*.md
+api/test
+api/coverage
+web/public/mockServiceWorker.js
