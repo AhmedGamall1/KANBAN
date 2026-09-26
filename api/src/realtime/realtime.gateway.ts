@@ -197,8 +197,11 @@ export class RealtimeGateway
             return;
         }
 
-        if (socket.data.boardId && socket.data.boardId !== boardId) {
-            await socket.leave(boardRoom(socket.data.boardId));
+        const previousBoardId = socket.data.boardId;
+
+        if (previousBoardId && previousBoardId !== boardId) {
+            this.clearEditing(socket);
+            await socket.leave(boardRoom(previousBoardId));
         }
 
         await socket.join(boardRoom(boardId));
@@ -217,6 +220,10 @@ export class RealtimeGateway
         socket
             .to(boardRoom(boardId))
             .emit('presence:update', { users: await this.presenceFor(boardId) });
+
+        if (previousBoardId && previousBoardId !== boardId) {
+            await this.broadcastPresence(previousBoardId);
+        }
 
         this.logger.log(`${socket.data.user.name} joined ${boardRoom(boardId)}`);
     }
