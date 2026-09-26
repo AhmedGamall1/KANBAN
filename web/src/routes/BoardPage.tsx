@@ -1,71 +1,42 @@
-import { move } from "@dnd-kit/helpers";
 import { DragDropProvider } from "@dnd-kit/react";
-import { useQueryClient } from "@tanstack/react-query";
-import { useEffect, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router";
-import {
-  boardQueryKey,
-  useBoard,
-  useDeleteBoard,
-  useRenameBoard,
-  type BoardData,
-} from "@/boards/useBoard";
-import { useCreateCard, useMoveCard } from "@/boards/useCards";
-import { useCreateColumn, useMoveColumn } from "@/boards/useColumns";
+import { useRef, useState } from "react";
+import { useParams } from "react-router";
+import { useBoard } from "@/boards/useBoard";
+import { useBoardDrag } from "@/boards/useBoardDrag";
+import { useCreateCard } from "@/boards/useCards";
 import BoardColumn from "@/components/board/BoardColumn";
+import BoardDialogs, {
+  type BoardDialog,
+} from "@/components/board/BoardDialogs";
 import CardDrawer from "@/components/board/CardDrawer";
 import ConnectionStatus from "@/components/board/ConnectionStatus";
 import CursorLayer from "@/components/board/CursorLayer";
 import PresenceBar from "@/components/board/PresenceBar";
 import Button from "@/components/ui/Button";
-import ConfirmDialog from "@/components/ui/ConfirmDialog";
-import NameDialog from "@/components/ui/NameDialog";
 import Spinner from "@/components/ui/Spinner";
 import { PencilIcon, PlusIcon, TrashIcon } from "@/components/ui/icons";
 import { ApiError } from "@/lib/api";
-import { socket } from "@/realtime/socket";
 import { useBoardSocket } from "@/realtime/useBoardSocket";
+import { useCursorBroadcast } from "@/realtime/useCursorBroadcast";
 import { useMembers, type Member } from "@/workspaces/useMembers";
 import { useWorkspace } from "@/workspaces/useWorkspaces";
 
-const CURSOR_INTERVAL = 50;
-
 export default function BoardPage() {
   const { boardId } = useParams();
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
 
   const [openCardId, setOpenCardId] = useState<string | null>(null);
-  const [renaming, setRenaming] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-  const [addingColumn, setAddingColumn] = useState(false);
+  const [dialog, setDialog] = useState<BoardDialog | null>(null);
 
   const { data, isPending, error } = useBoard(boardId);
   const { workspace } = useWorkspace(data?.board.workspaceId);
   const { data: boardMembers } = useMembers(data?.board.workspaceId);
-  const renameBoard = useRenameBoard(boardId ?? "", data?.board.workspaceId);
-  const deleteBoard = useDeleteBoard(boardId ?? "", data?.board.workspaceId);
   const createCard = useCreateCard(boardId ?? "");
-  const createColumn = useCreateColumn(boardId ?? "");
-  const moveColumn = useMoveColumn(boardId ?? "");
-  const moveCard = useMoveCard(boardId ?? "");
-  const snapshot = useRef<BoardData | null>(null);
 
   const { status, role, presence, cursors, editingCards } =
     useBoardSocket(boardId);
+  const drag = useBoardDrag(boardId ?? "");
   const surface = useRef<HTMLDivElement>(null);
-  const lastCursorAt = useRef(0);
-  const pendingCursor = useRef<{ x: number; y: number } | null>(null);
-  const cursorTimer = useRef<number | null>(null);
-
-  useEffect(
-    () => () => {
-      if (cursorTimer.current !== null) {
-        window.clearTimeout(cursorTimer.current);
-      }
-    },
-    [],
-  );
+  const trackCursor = useCursorBroadcast(surface);
 
   if (isPending) {
     return <Spinner />;
@@ -101,138 +72,19 @@ export default function BoardPage() {
     membersById[member.userId] = member;
   }
 
-  function reorder(event: Parameters<typeof move>[1], kind: string) {
-    queryClient.setQueryData<BoardData>(
-      boardQueryKey(boardId ?? ""),
-      (previous) => {
-        if (!previous) {
-          return previous;
-        }
-
-        return kind === "column"
-          ? { ...previous, columnOrder: move(previous.columnOrder, event) }
-          : { ...previous, cardOrder: move(previous.cardOrder, event) };
-      },
-    );
-  }
-
-  function flushCursor() {
-    cursorTimer.current = null;
-
-    if (!pendingCursor.current) {
-      return;
-    }
-
-    socket.emit("cursor:move", pendingCursor.current);
-    pendingCursor.current = null;
-    lastCursorAt.current = Date.now();
-  }
-
-  function trackCursor(event: { clientX: number; clientY: number }) {
-    const box = surface.current?.getBoundingClientRect();
-
-    if (!box || box.width === 0 || box.height === 0) {
-      return;
-    }
-
-    pendingCursor.current = {
-      x: Math.min(1, Math.max(0, (event.clientX - box.left) / box.width)),
-      y: Math.min(1, Math.max(0, (event.clientY - box.top) / box.height)),
-    };
-
-    const wait = CURSOR_INTERVAL - (Date.now() - lastCursorAt.current);
-
-    if (wait <= 0) {
-      flushCursor();
-    } else if (cursorTimer.current === null) {
-      cursorTimer.current = window.setTimeout(flushCursor, wait);
-    }
-  }
-
-  function currentBoard() {
-    return queryClient.getQueryData<BoardData>(boardQueryKey(boardId ?? ""));
-  }
-
-  function rollback() {
-    if (snapshot.current) {
-      queryClient.setQueryData(boardQueryKey(boardId ?? ""), snapshot.current);
-    }
-  }
-
-  function columnOf(board: BoardData, cardId: string) {
-    return board.columnOrder.find((id) => board.cardOrder[id]?.includes(cardId));
-  }
-
-  function persistColumnMove(columnId: string) {
-    const order = currentBoard()?.columnOrder ?? [];
-    const index = order.indexOf(columnId);
-
-    if (index === -1 || snapshot.current?.columnOrder[index] === columnId) {
-      return;
-    }
-
-    moveColumn.mutate(
-      {
-        columnId,
-        prevColumnId: order[index - 1] ?? null,
-        nextColumnId: order[index + 1] ?? null,
-      },
-      { onError: rollback },
-    );
-  }
-
-  function persistCardMove(cardId: string) {
-    const board = currentBoard();
-    const columnId = board ? columnOf(board, cardId) : undefined;
-
-    if (!board || !columnId) {
-      return;
-    }
-
-    const siblings = board.cardOrder[columnId];
-    const index = siblings.indexOf(cardId);
-    const before = snapshot.current;
-
-    if (
-      before &&
-      columnOf(before, cardId) === columnId &&
-      before.cardOrder[columnId]?.[index] === cardId
-    ) {
-      return;
-    }
-
-    moveCard.mutate(
-      {
-        cardId,
-        columnId,
-        prevCardId: siblings[index - 1] ?? null,
-        nextCardId: siblings[index + 1] ?? null,
-      },
-      { onError: rollback },
-    );
-  }
-
   return (
     <DragDropProvider
-      onDragStart={() => {
-        snapshot.current = currentBoard() ?? null;
-      }}
+      onDragStart={drag.capture}
       onDragOver={(event) => {
-        reorder(event, String(event.operation.source?.type ?? "card"));
+        drag.reorder(event, String(event.operation.source?.type ?? "card"));
       }}
       onDragEnd={(event) => {
-        const source = event.operation.source;
-
         if (event.canceled) {
-          rollback();
+          drag.rollback();
           return;
         }
 
-        if (source?.type === "column") {
-          persistColumnMove(String(source.id));
-        } else if (source?.type === "card") {
-          persistCardMove(String(source.id));
-        }
+        drag.persist(event.operation.source);
       }}
     >
       <div className="flex h-full flex-col">
@@ -251,10 +103,7 @@ export default function BoardPage() {
                 type="button"
                 aria-label="Rename board"
                 title="Rename board"
-                onClick={() => {
-                  renameBoard.reset();
-                  setRenaming(true);
-                }}
+                onClick={() => setDialog("rename")}
                 className="rounded-control p-1.5 text-ink-faint transition-colors hover:bg-subtle hover:text-ink"
               >
                 <PencilIcon />
@@ -264,10 +113,7 @@ export default function BoardPage() {
                 type="button"
                 aria-label="Delete board"
                 title="Delete board"
-                onClick={() => {
-                  deleteBoard.reset();
-                  setDeleting(true);
-                }}
+                onClick={() => setDialog("delete")}
                 className="rounded-control p-1.5 text-ink-faint transition-colors hover:bg-danger-soft hover:text-danger"
               >
                 <TrashIcon />
@@ -287,55 +133,46 @@ export default function BoardPage() {
               </p>
 
               {canEdit && (
-                <Button
-                  className="mt-4"
-                  onClick={() => {
-                    createColumn.reset();
-                    setAddingColumn(true);
-                  }}
-                >
+                <Button className="mt-4" onClick={() => setDialog("column")}>
                   Add a column
                 </Button>
               )}
             </div>
           </div>
         ) : (
-          <div
-            className="flex-1 overflow-x-auto p-6"
-            onPointerMove={trackCursor}
-          >
+          <div className="flex-1 overflow-x-auto p-6" onPointerMove={trackCursor}>
             <div className="flex h-full items-start gap-3">
               <div
                 ref={surface}
                 className="relative flex h-full w-max items-start gap-3"
               >
                 {boardColumns.map((column, columnIndex) => (
-                <BoardColumn
-                  key={column.id}
-                  column={column}
-                  index={columnIndex}
-                  cards={(data.cardOrder[column.id] ?? []).map(
-                    (cardId) => data.cardsById[cardId],
-                  )}
-                  membersById={membersById}
-                  canEdit={canEdit}
-                  editingCards={editingCards}
-                  addingCard={
-                    createCard.isPending &&
-                    createCard.variables?.columnId === column.id
-                  }
-                  addError={
-                    createCard.error instanceof ApiError &&
-                    createCard.variables?.columnId === column.id
-                      ? (createCard.error.fieldError("title") ??
-                        createCard.error.message)
-                      : undefined
-                  }
-                  onAddCard={(columnId, title) =>
-                    createCard.mutateAsync({ columnId, title })
-                  }
-                  onOpenCard={setOpenCardId}
-                />
+                  <BoardColumn
+                    key={column.id}
+                    column={column}
+                    index={columnIndex}
+                    cards={(data.cardOrder[column.id] ?? []).map(
+                      (cardId) => data.cardsById[cardId],
+                    )}
+                    membersById={membersById}
+                    canEdit={canEdit}
+                    editingCards={editingCards}
+                    addingCard={
+                      createCard.isPending &&
+                      createCard.variables?.columnId === column.id
+                    }
+                    addError={
+                      createCard.error instanceof ApiError &&
+                      createCard.variables?.columnId === column.id
+                        ? (createCard.error.fieldError("title") ??
+                          createCard.error.message)
+                        : undefined
+                    }
+                    onAddCard={(columnId, title) =>
+                      createCard.mutateAsync({ columnId, title })
+                    }
+                    onOpenCard={setOpenCardId}
+                  />
                 ))}
 
                 <CursorLayer cursors={cursors} presence={presence} />
@@ -344,10 +181,7 @@ export default function BoardPage() {
               {canEdit && (
                 <button
                   type="button"
-                  onClick={() => {
-                    createColumn.reset();
-                    setAddingColumn(true);
-                  }}
+                  onClick={() => setDialog("column")}
                   className="flex w-72 shrink-0 items-center gap-1.5 rounded-card border border-dashed border-line-strong px-3 py-2.5 text-ink-muted transition-colors hover:bg-subtle hover:text-ink"
                 >
                   <PlusIcon />
@@ -373,72 +207,11 @@ export default function BoardPage() {
           />
         )}
 
-        {addingColumn && (
-          <NameDialog
-            title="Add column"
-            label="Column name"
-            submitLabel="Add column"
-            placeholder="In review"
-            pending={createColumn.isPending}
-            error={
-              createColumn.error instanceof ApiError
-                ? (createColumn.error.fieldError("name") ??
-                  createColumn.error.message)
-                : undefined
-            }
-            onClose={() => setAddingColumn(false)}
-            onSubmit={(name) =>
-              createColumn.mutate(name, {
-                onSuccess: () => setAddingColumn(false),
-              })
-            }
-          />
-        )}
-
-        {renaming && (
-          <NameDialog
-            title="Rename board"
-            label="Board name"
-            submitLabel="Save"
-            initialValue={data.board.name}
-            pending={renameBoard.isPending}
-            error={
-              renameBoard.error instanceof ApiError
-                ? (renameBoard.error.fieldError("name") ??
-                  renameBoard.error.message)
-                : undefined
-            }
-            onClose={() => setRenaming(false)}
-            onSubmit={(name) =>
-              renameBoard.mutate(name, {
-                onSuccess: () => setRenaming(false),
-              })
-            }
-          />
-        )}
-
-        {deleting && (
-          <ConfirmDialog
-            title="Delete board"
-            body={`"${data.board.name}" and every column and card on it will be deleted. This cannot be undone.`}
-            confirmLabel="Delete board"
-            pending={deleteBoard.isPending}
-            error={
-              deleteBoard.error instanceof ApiError
-                ? deleteBoard.error.message
-                : undefined
-            }
-            onClose={() => setDeleting(false)}
-            onConfirm={() =>
-              deleteBoard.mutate(undefined, {
-                onSuccess: () => {
-                  setDeleting(false);
-                  navigate(`/workspaces/${data.board.workspaceId}`, {
-                    replace: true,
-                  });
-                },
-              })
-            }
+        {dialog && (
+          <BoardDialogs
+            board={data.board}
+            open={dialog}
+            onClose={() => setDialog(null)}
           />
         )}
       </div>
