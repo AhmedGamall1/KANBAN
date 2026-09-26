@@ -13,7 +13,8 @@ import {
     truncateAll,
     type TestUser,
 } from './helpers/harness';
-import { connectSocket, expectSilence, joinBoard, once } from './helpers/socket';
+import { connectSocket, joinBoard, once, watchForSilence } from './helpers/socket';
+
 
 describe('revocation reaches the socket', () => {
     let app: INestApplication;
@@ -84,6 +85,7 @@ describe('revocation reaches the socket', () => {
 
     it('stops delivering board events once the member is removed', async () => {
         const socket = await watchingMember();
+        const settle = watchForSilence(socket, 'board:event');
 
         await request(app.getHttpServer())
             .delete(`/workspaces/${workspaceId}/members/${member.id}`)
@@ -92,7 +94,7 @@ describe('revocation reaches the socket', () => {
 
         await ownerAddsCard('Secret');
 
-        await expectSilence(socket, 'board:event');
+        await settle();
     });
 
     it('tells the removed member why', async () => {

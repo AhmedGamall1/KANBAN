@@ -44,25 +44,30 @@ export function once<T = unknown>(
     });
 }
 
-export function expectSilence(
+export function watchForSilence(
     socket: Socket,
     event: string,
-    windowMs = 800,
-): Promise<void> {
-    return new Promise<void>((resolve, reject) => {
-        function handler(payload: unknown): void {
-            clearTimeout(timer);
-            socket.off(event, handler);
-            reject(new Error(`received "${event}" but expected none: ${JSON.stringify(payload)}`));
+    windowMs = 1000,
+): () => Promise<void> {
+    let received: unknown;
+
+    function handler(payload: unknown): void {
+        received ??= payload;
+    }
+
+    socket.on(event, handler);
+
+    return async () => {
+        await new Promise((resolve) => setTimeout(resolve, windowMs));
+
+        socket.off(event, handler);
+
+        if (received !== undefined) {
+            throw new Error(
+                `received "${event}" but expected none: ${JSON.stringify(received)}`,
+            );
         }
-
-        const timer = setTimeout(() => {
-            socket.off(event, handler);
-            resolve();
-        }, windowMs);
-
-        socket.on(event, handler);
-    });
+    };
 }
 
 export async function joinBoard(socket: Socket, boardId: string): Promise<void> {

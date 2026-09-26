@@ -3,6 +3,10 @@ import { DatabaseService, type Queryable } from '../database/database.service';
 import { MembersRepository, type Member, type Role } from './members.repository';
 import { WorkspacesRepository } from './workspaces.repository';
 import { AccessRepository } from '../access/access.repository';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { requestContext } from '../database/request-context';
+import { MEMBER_REMOVED, MEMBER_ROLE_CHANGED } from './member-events';
+
 
 @Injectable()
 export class MembersService {
@@ -10,8 +14,13 @@ export class MembersService {
         private readonly db: DatabaseService,
         private readonly workspaces: WorkspacesRepository,
         private readonly members: MembersRepository,
-        private readonly access: AccessRepository
+        private readonly access: AccessRepository,
+        private readonly emitter: EventEmitter2,
     ) { }
+
+    private onCommit(callback: () => void): void {
+        requestContext.getStore()?.afterCommit.push(callback);
+    }
 
     list(workspaceId: string): Promise<Member[]> {
         return this.members.list(workspaceId);
@@ -27,6 +36,10 @@ export class MembersService {
             if (!removed) {
                 throw new NotFoundException('Member not found');
             }
+
+            this.onCommit(() =>
+                this.emitter.emit(MEMBER_REMOVED, { workspaceId, userId }),
+            );
         });
     }
 
@@ -48,10 +61,13 @@ export class MembersService {
                 throw new NotFoundException('Member not found');
             }
 
+            this.onCommit(() =>
+                this.emitter.emit(MEMBER_ROLE_CHANGED, { workspaceId, userId, role }),
+            );
+
             return member;
         });
     }
-
     private async assertNotLastOwner(
         workspaceId: string,
         userId: string,

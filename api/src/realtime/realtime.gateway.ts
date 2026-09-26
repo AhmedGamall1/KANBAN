@@ -17,10 +17,19 @@ import { DatabaseService } from '../database/database.service';
 import { EventsService } from '../events/events.service';
 import { OnEvent } from '@nestjs/event-emitter';
 import type { BoardEvent } from '../events/events.repository';
+import { BoardsRepository } from '../boards/boards.repository';
+import {
+    MEMBER_REMOVED,
+    MEMBER_ROLE_CHANGED,
+    type MemberRemovedEvent,
+    type MemberRoleChangedEvent,
+} from '../workspaces/member-events';
+
 
 export interface SocketData {
     user: User;
     boardId?: string;
+    workspaceId?: string;
     editingCardId?: string;
 }
 
@@ -64,6 +73,7 @@ export class RealtimeGateway
         private readonly access: AccessRepository,
         private readonly events: EventsService,
         private readonly db: DatabaseService,
+        private readonly boards: BoardsRepository,
     ) { }
 
     afterInit(server: Server): void {
@@ -174,19 +184,26 @@ export class RealtimeGateway
             return;
         }
 
+        const state = await this.db.withUser(userId, async () => ({
+            board: await this.boards.findById(boardId),
+            seq: await this.events.currentSeq(boardId),
+            catchUp: parsed.data.after
+                ? await this.events.since(boardId, parsed.data.after)
+                : null,
+        }));
+
+        if (!state.board) {
+            socket.emit('board:error', { message: 'Board not found' });
+            return;
+        }
+
         if (socket.data.boardId && socket.data.boardId !== boardId) {
             await socket.leave(boardRoom(socket.data.boardId));
         }
 
         await socket.join(boardRoom(boardId));
         socket.data.boardId = boardId;
-
-        const state = await this.db.withUser(userId, async () => ({
-            seq: await this.events.currentSeq(boardId),
-            catchUp: parsed.data.after
-                ? await this.events.since(boardId, parsed.data.after)
-                : null,
-        }));
+        socket.data.workspaceId = state.board.workspaceId;
 
         socket.emit('board:state', {
             boardId,
@@ -214,12 +231,57 @@ export class RealtimeGateway
 
         await socket.leave(boardRoom(boardId));
         socket.data.boardId = undefined;
+        socket.data.workspaceId = undefined;
 
         this.clearEditing(socket);
 
         await this.broadcastPresence(boardId);
 
         this.logger.log(`${socket.data.user.name} left ${boardRoom(boardId)}`);
+    }
+
+    private socketsFor(workspaceId: string, userId: string): AppSocket[] {
+        const matches: AppSocket[] = [];
+
+        for (const socket of this.server.sockets.sockets.values()) {
+            const data = (socket as AppSocket).data;
+
+            if (data.user?.id === userId && data.workspaceId === workspaceId) {
+                matches.push(socket as AppSocket);
+            }
+        }
+
+        return matches;
+    }
+
+    @OnEvent(MEMBER_REMOVED)
+    async handleMemberRemoved(payload: MemberRemovedEvent): Promise<void> {
+        const affected = this.socketsFor(payload.workspaceId, payload.userId);
+        const boards = new Set<string>();
+
+        for (const socket of affected) {
+            if (socket.data.boardId) {
+                boards.add(socket.data.boardId);
+                await socket.leave(boardRoom(socket.data.boardId));
+            }
+
+            socket.data.boardId = undefined;
+            socket.data.workspaceId = undefined;
+            socket.data.editingCardId = undefined;
+
+            socket.emit('board:revoked', { reason: 'removed' });
+        }
+
+        for (const boardId of boards) {
+            await this.broadcastPresence(boardId);
+        }
+    }
+
+    @OnEvent(MEMBER_ROLE_CHANGED)
+    handleMemberRoleChanged(payload: MemberRoleChangedEvent): void {
+        for (const socket of this.socketsFor(payload.workspaceId, payload.userId)) {
+            socket.emit('board:role', { role: payload.role });
+        }
     }
 
     @OnEvent('board.event')
