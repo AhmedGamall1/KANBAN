@@ -111,3 +111,52 @@ export async function createBoard(
 
     return { id: response.body.board.id };
 }
+
+
+export async function createColumn(
+    app: INestApplication,
+    cookie: string,
+    boardId: string,
+    name = 'To do',
+): Promise<{ id: string }> {
+    const response = await request(app.getHttpServer())
+        .post(`/boards/${boardId}/columns`)
+        .set('Cookie', cookie)
+        .send({ name })
+        .expect(201);
+
+    return { id: response.body.column.id };
+}
+
+export async function createCard(
+    app: INestApplication,
+    cookie: string,
+    boardId: string,
+    columnId: string,
+    title = 'First card',
+): Promise<{ id: string }> {
+    const response = await request(app.getHttpServer())
+        .post(`/boards/${boardId}/cards`)
+        .set('Cookie', cookie)
+        .send({ columnId, title })
+        .expect(201);
+
+    return { id: response.body.card.id };
+}
+
+export async function joinWorkspace(
+    app: INestApplication,
+    ownerCookie: string,
+    workspaceId: string,
+    joinerCookie: string,
+): Promise<void> {
+    const invite = await request(app.getHttpServer())
+        .post(`/workspaces/${workspaceId}/invite-link`)
+        .set('Cookie', ownerCookie)
+        .expect(200);
+
+    await request(app.getHttpServer())
+        .post(`/invites/${invite.body.invite.token}/accept`)
+        .set('Cookie', joinerCookie)
+        .expect(200);
+}
