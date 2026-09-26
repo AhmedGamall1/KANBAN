@@ -52,6 +52,8 @@ interface ServerToClientEvents {
     editing: boolean;
   }) => void;
   "board:error": (payload: { message: string }) => void;
+  "board:revoked": (payload: { reason: string }) => void;
+  "board:role": (payload: { role: Role }) => void;
 }
 
 interface ClientToServerEvents {

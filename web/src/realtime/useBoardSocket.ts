@@ -8,7 +8,10 @@ import {
   type BoardState,
   type PresenceUser,
 } from "@/realtime/socket";
-import type { Role } from "@/workspaces/useWorkspaces";
+import {
+  workspacesQueryKey,
+  type Role,
+} from "@/workspaces/useWorkspaces";
 
 export type SocketStatus = "connecting" | "live" | "offline";
 
@@ -126,6 +129,25 @@ export function useBoardSocket(boardId: string | undefined) {
       setError(payload.message);
     }
 
+    function handleRevoked() {
+      setPresence([]);
+      setCursors({});
+      setEditingCards({});
+      setRole(null);
+      setError("Your access to this board was removed.");
+
+      void client.invalidateQueries({ queryKey: workspacesQueryKey });
+      void client.invalidateQueries({
+        queryKey: boardQueryKey(boardId as string),
+      });
+    }
+
+    function handleRole(payload: { role: Role }) {
+      setRole(payload.role);
+
+      void client.invalidateQueries({ queryKey: workspacesQueryKey });
+    }
+
     function handleEvent(event: BoardEvent) {
       applyBoardEvent(client, event);
     }
@@ -139,6 +161,8 @@ export function useBoardSocket(boardId: string | undefined) {
     socket.on("cursor:update", handleCursor);
     socket.on("card:editing", handleEditing);
     socket.on("board:error", handleBoardError);
+    socket.on("board:revoked", handleRevoked);
+    socket.on("board:role", handleRole);
 
     if (socket.connected) {
       join();
@@ -161,6 +185,8 @@ export function useBoardSocket(boardId: string | undefined) {
       socket.off("cursor:update", handleCursor);
       socket.off("card:editing", handleEditing);
       socket.off("board:error", handleBoardError);
+      socket.off("board:revoked", handleRevoked);
+      socket.off("board:role", handleRole);
       setPresence([]);
       setCursors({});
       setEditingCards({});
