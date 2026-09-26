@@ -49,6 +49,10 @@ export class EventsService {
         return { events: hasMore ? rows.slice(0, CATCH_UP_LIMIT) : rows, hasMore };
     }
 
+    lockBoard(boardId: string, tx: Queryable): Promise<void> {
+        return this.events.lockBoard(boardId, tx);
+    }
+
     currentSeq(boardId: string, tx?: Queryable): Promise<string> {
         return this.events.currentSeq(boardId, tx);
     }

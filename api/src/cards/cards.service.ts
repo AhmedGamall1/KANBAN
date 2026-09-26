@@ -28,6 +28,8 @@ export class CardsService {
 
     create(boardId: string, actorId: string, dto: CreateCardDto): Promise<Card> {
         return this.db.transaction(async (tx) => {
+            await this.events.lockBoard(boardId, tx);
+
             const position = await this.cards.nextPosition(dto.columnId, tx);
 
             const card = await this.cards.create(
@@ -117,6 +119,8 @@ export class CardsService {
                 throw new NotFoundException('Card not found');
             }
 
+            await this.events.lockBoard(card.boardId, tx);
+
             const prev = dto.prevCardId
                 ? await this.cards.findById(dto.prevCardId, tx)
                 : null;
@@ -135,7 +139,9 @@ export class CardsService {
                 throw new BadRequestException('Neighbour is not in the target column');
             }
 
-            const position = await this.cards.midpointBetween(
+            const position = await this.cards.positionBetween(
+                cardId,
+                dto.columnId,
                 dto.prevCardId,
                 dto.nextCardId,
                 tx,

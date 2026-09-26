@@ -87,7 +87,9 @@ export class ColumnsRepository {
         );
     }
 
-    async midpointBetween(
+    async positionBetween(
+        columnId: string,
+        boardId: string,
         prevId: string | null,
         nextId: string | null,
         tx: Queryable,
@@ -95,18 +97,36 @@ export class ColumnsRepository {
         const { rows } = await tx.query<{ position: string }>(
             `SELECT (
          CASE
-           WHEN prev IS NULL AND next IS NULL THEN 1
-           WHEN prev IS NULL THEN next / 2
-           WHEN next IS NULL THEN prev + 1
-           ELSE (prev + next) / 2
+           WHEN lower IS NULL AND upper IS NULL THEN 1
+           WHEN lower IS NULL THEN upper / 2
+           WHEN upper IS NULL THEN lower + 1
+           ELSE (lower + upper) / 2
          END
        )::text AS position
        FROM (
          SELECT
-           (SELECT position FROM columns WHERE id = $1) AS prev,
-           (SELECT position FROM columns WHERE id = $2) AS next
-       ) AS neighbours`,
-            [prevId, nextId],
+           coalesce(
+             prev_pos,
+             CASE WHEN next_pos IS NOT NULL THEN (
+               SELECT max(position) FROM columns
+                WHERE board_id = $2 AND id <> $1 AND position < next_pos
+             ) END
+           ) AS lower,
+           CASE
+             WHEN prev_pos IS NOT NULL THEN (
+               SELECT min(position) FROM columns
+                WHERE board_id = $2 AND id <> $1 AND position > prev_pos
+                  AND (next_pos IS NULL OR position <= next_pos)
+             )
+             ELSE next_pos
+           END AS upper
+         FROM (
+           SELECT
+             (SELECT position FROM columns WHERE id = $3) AS prev_pos,
+             (SELECT position FROM columns WHERE id = $4) AS next_pos
+         ) AS anchors
+       ) AS bounds`,
+            [columnId, boardId, prevId, nextId],
         );
 
         return rows[0].position;

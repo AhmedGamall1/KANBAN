@@ -19,6 +19,8 @@ export class ColumnsService {
         dto: CreateColumnDto,
     ): Promise<Column> {
         return this.db.transaction(async (tx) => {
+            await this.events.lockBoard(boardId, tx);
+
             const position = await this.columns.nextPosition(boardId, tx);
 
             const column = await this.columns.create(
@@ -46,6 +48,8 @@ export class ColumnsService {
                 throw new NotFoundException('Column not found');
             }
 
+            await this.events.lockBoard(column.boardId, tx);
+
             if (dto.move) {
                 const { prevColumnId, nextColumnId } = dto.move;
 
@@ -67,7 +71,9 @@ export class ColumnsService {
                     throw new BadRequestException('Neighbour is not on this board');
                 }
 
-                const position = await this.columns.midpointBetween(
+                const position = await this.columns.positionBetween(
+                    columnId,
+                    column.boardId,
                     prevColumnId,
                     nextColumnId,
                     tx,
