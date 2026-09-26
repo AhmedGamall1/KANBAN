@@ -12,6 +12,7 @@ export const envSchema = z.object({
   GOOGLE_CLIENT_SECRET: z.string().min(1).optional(),
   GITHUB_CLIENT_ID: z.string().min(1).optional(),
   GITHUB_CLIENT_SECRET: z.string().min(1).optional(),
+  CLIENT_DIR: z.string().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;

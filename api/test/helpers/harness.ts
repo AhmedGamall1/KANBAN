@@ -4,6 +4,8 @@ import cookieParser from 'cookie-parser';
 import { Pool } from 'pg';
 import request from 'supertest';
 import { AppModule } from '../../src/app.module';
+import { configureApp } from 'src/bootstrap';
+import { NestExpressApplication } from '@nestjs/platform-express';
 
 const TABLES = [
     'board_events',
@@ -165,4 +167,20 @@ export async function joinWorkspace(
         .post(`/invites/${invite.body.invite.token}/accept`)
         .set('Cookie', joinerCookie)
         .expect(200);
+}
+
+export async function createProductionApp(
+    clientDir: string,
+): Promise<INestApplication> {
+    const moduleRef = await Test.createTestingModule({
+        imports: [AppModule],
+    }).compile();
+
+    const app = moduleRef.createNestApplication<NestExpressApplication>();
+
+    configureApp(app, { clientDir });
+
+    await app.init();
+
+    return app;
 }

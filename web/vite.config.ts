@@ -16,7 +16,6 @@ export default defineConfig({
     proxy: {
       '/api': {
         target: apiTarget,
-        rewrite: (path) => path.replace(/^\/api/, ''),
       },
       '/socket.io': {
         target: apiTarget,
