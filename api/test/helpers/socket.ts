@@ -70,10 +70,40 @@ export function watchForSilence(
     };
 }
 
-export async function joinBoard(socket: Socket, boardId: string): Promise<void> {
-    const state = once(socket, 'board:state');
+export async function joinBoard<T = unknown>(
+    socket: Socket,
+    boardId: string,
+    after?: string,
+): Promise<T> {
+    const state = once<T>(socket, 'board:state');
 
-    socket.emit('board:join', { boardId });
+    socket.emit('board:join', after ? { boardId, after } : { boardId });
 
-    await state;
+    return state;
+}
+
+export function connectExpectingFailure(app: INestApplication): Promise<string> {
+    const socket = io(serverUrl(app), {
+        transports: ['websocket'],
+        reconnection: false,
+    });
+
+    return new Promise<string>((resolve, reject) => {
+        const timer = setTimeout(() => {
+            socket.disconnect();
+            reject(new Error('expected the handshake to fail'));
+        }, 4000);
+
+        socket.on('connect_error', (error: Error) => {
+            clearTimeout(timer);
+            socket.disconnect();
+            resolve(error.message);
+        });
+
+        socket.on('connect', () => {
+            clearTimeout(timer);
+            socket.disconnect();
+            reject(new Error('handshake succeeded without a cookie'));
+        });
+    });
 }
