@@ -12,6 +12,7 @@ import { ColumnsModule } from './columns/columns.module';
 import { CardsModule } from './cards/cards.module';
 import { EventsModule } from './events/events.module';
 import { RealtimeModule } from './realtime/realtime.module';
+import { DemoModule } from './demo/demo.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
     CardsModule,
     EventsModule,
     RealtimeModule,
+    DemoModule,
     EventEmitterModule.forRoot()
   ],
   providers: [

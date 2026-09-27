@@ -18,7 +18,7 @@ import { signupSchema, type SignupDto } from './dto/signup.dto';
 import { CurrentUser } from '../common/current-user.decorator';
 import type { User } from '../users/users.repository';
 import { Public } from '../common/public.decorator';
-import { sessionCookieOptions } from './session-cookie';
+import { SESSION_COOKIE, sessionCookieOptions } from './session-cookie';
 
 @Controller('auth')
 export class AuthController {
@@ -40,7 +40,7 @@ export class AuthController {
         @Res({ passthrough: true }) res: Response,
     ) {
         const { user, token } = await this.auth.signup(dto);
-        res.cookie('sid', token, this.cookieOptions());
+        res.cookie(SESSION_COOKIE, token, this.cookieOptions());
         return { user };
     }
 
@@ -52,7 +52,7 @@ export class AuthController {
         @Res({ passthrough: true }) res: Response,
     ) {
         const { user, token } = await this.auth.login(dto);
-        res.cookie('sid', token, this.cookieOptions());
+        res.cookie(SESSION_COOKIE, token, this.cookieOptions());
         return { user };
     }
 
@@ -63,13 +63,13 @@ export class AuthController {
         @Req() req: Request,
         @Res({ passthrough: true }) res: Response,
     ): Promise<void> {
-        const token = req.cookies?.['sid'] as string | undefined;
+        const token = req.cookies?.[SESSION_COOKIE] as string | undefined;
 
         if (token) {
             await this.auth.logout(token);
         }
 
-        res.clearCookie('sid', { path: '/' });
+        res.clearCookie(SESSION_COOKIE, { path: '/' });
     }
 
     @Get('me')

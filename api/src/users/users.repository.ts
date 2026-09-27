@@ -75,6 +75,20 @@ export class UsersRepository {
     return rows[0] ? toUser(rows[0]) : null;
   }
 
+  async createGuest(
+    input: { email: string; name: string; avatarColor: string },
+    tx?: Queryable,
+  ): Promise<User> {
+    const { rows } = await (tx ?? this.db).query<UserRow>(
+      `INSERT INTO users (email, name, avatar_color)
+       VALUES ($1, $2, $3)
+       RETURNING *`,
+      [input.email, input.name, input.avatarColor],
+    );
+
+    return toUser(rows[0]);
+  }
+
   async createFromProvider(
     input: {
       email: string;
