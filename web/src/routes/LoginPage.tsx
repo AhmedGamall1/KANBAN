@@ -1,6 +1,7 @@
-import type { SubmitEvent } from "react";
+import { useState, type SubmitEvent } from "react";
 import { Link, Navigate, useLocation, useSearchParams } from "react-router";
 import { useAuth, useLogin } from "@/auth/useAuth";
+import DemoEntry from "@/components/auth/DemoEntry";
 import ProviderButtons from "@/components/auth/ProviderButtons";
 import Button from "@/components/ui/Button";
 import TextField from "@/components/ui/TextField";
@@ -17,6 +18,7 @@ const PROVIDER_ERRORS: Record<string, string> = {
 export default function LoginPage() {
   const { user } = useAuth();
   const login = useLogin();
+  const [demoBoardId, setDemoBoardId] = useState<string | null>(null);
   const location = useLocation();
 
   const [params] = useSearchParams();
@@ -38,7 +40,11 @@ export default function LoginPage() {
   }
 
   if (user) {
-    return <Navigate to={state?.from ?? "/workspaces"} replace />;
+    const destination =
+      state?.from ??
+      (demoBoardId ? `/boards/${demoBoardId}` : "/workspaces");
+
+    return <Navigate to={destination} replace />;
   }
 
   return (
@@ -58,6 +64,8 @@ export default function LoginPage() {
         </>
       }
     >
+      <DemoEntry onStarted={setDemoBoardId} />
+
       {providerError && (
         <p className="mb-4 rounded-control bg-danger-soft px-2.5 py-2 text-sm text-danger">
           {providerError}

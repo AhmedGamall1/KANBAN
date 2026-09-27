@@ -65,6 +65,13 @@ export function useSignup() {
   });
 }
 
+export function useGuestLogin() {
+  return useMutation({
+    mutationFn: () =>
+      api.post<{ user: AuthUser; boardId: string }>("/auth/guest"),
+  });
+}
+
 export function useLogout() {
   const client = useQueryClient();
 
