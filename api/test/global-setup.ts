@@ -1,7 +1,7 @@
 import { resolve } from 'node:path';
 import { config as loadEnv } from 'dotenv';
 import { Client } from 'pg';
-import { migrate } from '../scripts/migrate';
+import { migrate } from '../src/database/migrator';
 import { TEST_DATABASE, toTestDatabase } from './test-database';
 
 export default async function globalSetup(): Promise<void> {
@@ -34,7 +34,7 @@ export default async function globalSetup(): Promise<void> {
 
     const testUrl = toTestDatabase(ownerUrl, 'MIGRATION_DATABASE_URL');
 
-    await migrate(testUrl, { quiet: true });
+    await migrate(testUrl);
 
     const test = new Client({ connectionString: testUrl });
 

@@ -4,6 +4,8 @@ import type { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
 import { configureApp, resolveClientDir } from './bootstrap';
 import type { Env } from './config/env.validation';
+import { Logger } from '@nestjs/common';
+import { migrate } from './database/migrator';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -12,6 +14,18 @@ async function bootstrap() {
 
   app.enableShutdownHooks();
   configureApp(app, { clientDir });
+  const logger = new Logger('Migrator');
+
+  const applied = await migrate(
+    config.get('MIGRATION_DATABASE_URL', { infer: true }),
+    { log: (message) => logger.log(message) },
+  );
+
+  logger.log(
+    applied.length === 0
+      ? 'Schema up to date'
+      : `Applied ${applied.length} migration(s)`,
+  );
 
   const port = config.get('PORT', { infer: true });
 
