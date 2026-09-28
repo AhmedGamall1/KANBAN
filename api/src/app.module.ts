@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
-import { validateEnv } from './config/env.validation';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { Env, validateEnv } from './config/env.validation';
 import { DatabaseModule } from './database/database.module';
 import { HealthModule } from './health/health.module';
 import { AuthModule } from './auth/auth.module';
 import { WorkspacesModule } from './workspaces/workspaces.module';
-import { APP_FILTER } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { PostgresExceptionFilter } from './common/postgres-exception.filter';
 import { BoardsModule } from './boards/boards.module';
 import { ColumnsModule } from './columns/columns.module';
@@ -14,8 +14,19 @@ import { EventsModule } from './events/events.module';
 import { RealtimeModule } from './realtime/realtime.module';
 import { DemoModule } from './demo/demo.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { THROTTLE_LIMIT, THROTTLE_WINDOW_MS } from './common/throttle';
 @Module({
   imports: [
+    ThrottlerModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService<Env, true>) => ({
+        throttlers: [{ ttl: THROTTLE_WINDOW_MS, limit: THROTTLE_LIMIT }],
+        skipIf: (context) =>
+          !config.get('THROTTLE_ENABLED', { infer: true }) ||
+          context.getType() !== 'http',
+      }),
+    }),
     ConfigModule.forRoot({
       isGlobal: true,
       cache: true,
@@ -34,6 +45,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
     EventEmitterModule.forRoot()
   ],
   providers: [
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
     { provide: APP_FILTER, useClass: PostgresExceptionFilter },
   ],
 })

@@ -19,6 +19,8 @@ import { CurrentUser } from '../common/current-user.decorator';
 import type { User } from '../users/users.repository';
 import { Public } from '../common/public.decorator';
 import { SESSION_COOKIE, sessionCookieOptions } from './session-cookie';
+import { Throttle } from '@nestjs/throttler';
+import { AUTH_THROTTLE } from 'src/common/throttle';
 
 @Controller('auth')
 export class AuthController {
@@ -34,6 +36,7 @@ export class AuthController {
     }
 
     @Public()
+    @Throttle({ default: AUTH_THROTTLE })
     @Post('signup') // default 201 created
     async signup(
         @Body(new ZodValidationPipe(signupSchema)) dto: SignupDto,
@@ -45,6 +48,7 @@ export class AuthController {
     }
 
     @Public()
+    @Throttle({ default: AUTH_THROTTLE })
     @Post('login')
     @HttpCode(HttpStatus.OK) // 200
     async login(

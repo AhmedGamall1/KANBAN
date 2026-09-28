@@ -13,7 +13,10 @@ async function bootstrap() {
   const clientDir = resolveClientDir(config.get('CLIENT_DIR', { infer: true }));
 
   app.enableShutdownHooks();
-  configureApp(app, { clientDir });
+  configureApp(app, {
+    clientDir,
+    trustProxy: config.get('TRUST_PROXY', { infer: true }),
+  });
   const logger = new Logger('Migrator');
 
   const applied = await migrate(

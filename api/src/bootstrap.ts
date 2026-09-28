@@ -17,8 +17,12 @@ export function resolveClientDir(configured?: string): string | null {
 
 export function configureApp(
     app: NestExpressApplication,
-    options: { clientDir?: string | null } = {},
+    options: { clientDir?: string | null; trustProxy?: boolean } = {},
 ): void {
+    if (options.trustProxy) {
+        app.set('trust proxy', 1);
+    }
+
     app.use(cookieParser());
     app.setGlobalPrefix(API_PREFIX);
 

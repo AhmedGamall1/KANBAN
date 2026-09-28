@@ -10,3 +10,4 @@ process.env.MIGRATION_DATABASE_URL = toTestDatabase(
     process.env.MIGRATION_DATABASE_URL,
     'MIGRATION_DATABASE_URL',
 );
+process.env.THROTTLE_ENABLED = 'false';

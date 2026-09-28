@@ -8,6 +8,8 @@ import {
 import { Public } from '../common/public.decorator';
 import type { Env } from '../config/env.validation';
 import { DemoService } from './demo.service';
+import { Throttle } from '@nestjs/throttler';
+import { GUEST_THROTTLE } from '../common/throttle';
 
 @Controller('auth')
 export class DemoController {
@@ -17,6 +19,7 @@ export class DemoController {
     ) { }
 
     @Public()
+    @Throttle({ default: GUEST_THROTTLE })
     @Post('guest')
     @HttpCode(HttpStatus.CREATED)
     async guest(@Res({ passthrough: true }) res: Response) {

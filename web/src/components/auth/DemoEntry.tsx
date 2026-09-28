@@ -13,7 +13,9 @@ export default function DemoEntry({ onStarted }: DemoEntryProps) {
 
   const error = guest.error
     ? guest.error instanceof ApiError
-      ? guest.error.message
+      ? guest.error.status === 429
+        ? "The demo has been busy. Please try again in a few minutes or use the actual project."
+        : guest.error.message
       : "Could not start the demo. Please try again."
     : null;
 
@@ -30,8 +32,8 @@ export default function DemoEntry({ onStarted }: DemoEntryProps) {
     <div className="mb-6 rounded-card border border-line bg-subtle p-4">
       <p className="font-medium text-ink">Just looking?</p>
       <p className="mt-1 text-sm text-ink-muted">
-        Open a demo board with real data, a team and an activity history. No sign
-        up, nothing to clean up.
+        Open a demo board with real data, a team and an activity history. No
+        sign up, nothing to clean up.
       </p>
 
       {error && (
