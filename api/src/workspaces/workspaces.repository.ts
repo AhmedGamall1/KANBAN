@@ -61,12 +61,12 @@ export class WorkspacesRepository {
     }
 
     async insert(
-        input: { id: string; name: string },
+        input: { id: string; name: string; isDemo?: boolean },
         tx?: Queryable,
     ): Promise<void> {
         await (tx ?? this.db).query(
-            `INSERT INTO workspaces (id, name) VALUES ($1, $2)`,
-            [input.id, input.name],
+            `INSERT INTO workspaces (id, name, is_demo) VALUES ($1, $2, $3)`,
+            [input.id, input.name, input.isDemo ?? false],
         );
     }
 

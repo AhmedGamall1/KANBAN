@@ -16,6 +16,8 @@ import { DemoModule } from './demo/demo.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { THROTTLE_LIMIT, THROTTLE_WINDOW_MS } from './common/throttle';
+import { ScheduleModule } from '@nestjs/schedule';
+import { MaintenanceModule } from './maintenance/maintenance.module';
 @Module({
   imports: [
     ThrottlerModule.forRootAsync({
@@ -42,7 +44,9 @@ import { THROTTLE_LIMIT, THROTTLE_WINDOW_MS } from './common/throttle';
     EventsModule,
     RealtimeModule,
     DemoModule,
-    EventEmitterModule.forRoot()
+    EventEmitterModule.forRoot(),
+    ScheduleModule.forRoot(),
+    MaintenanceModule
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },

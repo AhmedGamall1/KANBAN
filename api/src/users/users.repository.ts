@@ -80,8 +80,8 @@ export class UsersRepository {
     tx?: Queryable,
   ): Promise<User> {
     const { rows } = await (tx ?? this.db).query<UserRow>(
-      `INSERT INTO users (email, name, avatar_color)
-       VALUES ($1, $2, $3)
+      `INSERT INTO users (email, name, avatar_color, is_demo)
+       VALUES ($1, $2, $3, true)
        RETURNING *`,
       [input.email, input.name, input.avatarColor],
     );

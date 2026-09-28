@@ -81,7 +81,7 @@ export class DemoService {
     ): Promise<string> {
         const workspaceId = await this.workspaces.nextId(tx);
 
-        await this.workspaces.insert({ id: workspaceId, name: 'Acme Product' }, tx);
+        await this.workspaces.insert({ id: workspaceId, name: 'Acme Product', isDemo: true }, tx);
         await this.members.add(
             { workspaceId, userId: guest.id, role: 'owner' },
             tx,

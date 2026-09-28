@@ -21,6 +21,7 @@ export const envSchema = z.object({
     .enum(['true', 'false'])
     .default('true')
     .transform((value) => value === 'true'),
+  DEMO_TTL_HOURS: z.coerce.number().int().positive().default(6),
 });
 
 export type Env = z.infer<typeof envSchema>;
