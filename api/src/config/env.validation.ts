@@ -27,7 +27,11 @@ export const envSchema = z.object({
 export type Env = z.infer<typeof envSchema>;
 
 export function validateEnv(raw: Record<string, unknown>): Env {
-  const result = envSchema.safeParse(raw);
+  const present = Object.fromEntries(
+    Object.entries(raw).filter(([, value]) => value !== ''),
+  );
+
+  const result = envSchema.safeParse(present);
 
   if (!result.success) {
     throw new Error(
