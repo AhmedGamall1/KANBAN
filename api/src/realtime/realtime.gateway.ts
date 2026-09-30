@@ -1,4 +1,6 @@
 import { Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import type { Env } from '../config/env.validation';
 import {
     OnGatewayConnection,
     OnGatewayDisconnect,
@@ -59,7 +61,7 @@ const editingSchema = z.object({
 
 export type AppSocket = Socket & { data: SocketData };
 
-@WebSocketGateway({ cors: { origin: true, credentials: true } })
+@WebSocketGateway()
 export class RealtimeGateway
     implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
     private readonly logger = new Logger(RealtimeGateway.name);
@@ -74,11 +76,23 @@ export class RealtimeGateway
         private readonly events: EventsService,
         private readonly db: DatabaseService,
         private readonly boards: BoardsRepository,
+        private readonly config: ConfigService<Env, true>,
     ) { }
 
     afterInit(server: Server): void {
+        const allowedOrigin = new URL(
+            this.config.get('WEB_ORIGIN', { infer: true }),
+        ).origin;
+
         // every connection need to pass this middleware to open
         server.use((socket, next) => {
+            const origin = socket.handshake.headers.origin;
+
+            if (origin && origin !== allowedOrigin) {
+                next(new Error('Origin not allowed'));
+                return;
+            }
+
             this.authenticate(socket as AppSocket).then(
                 () => next(),
                 () => next(new Error('Unauthorized')),

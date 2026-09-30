@@ -23,6 +23,37 @@ export async function connectSocket(
     return socket;
 }
 
+export function connectWithOrigin(
+    app: INestApplication,
+    cookie: string,
+    origin: string,
+): Promise<string> {
+    const socket = io(serverUrl(app), {
+        extraHeaders: { Cookie: cookie, Origin: origin },
+        transports: ['websocket'],
+        reconnection: false,
+    });
+
+    return new Promise<string>((resolve) => {
+        const timer = setTimeout(() => {
+            socket.disconnect();
+            resolve('timeout');
+        }, 4000);
+
+        socket.on('connect', () => {
+            clearTimeout(timer);
+            socket.disconnect();
+            resolve('connected');
+        });
+
+        socket.on('connect_error', (error: Error) => {
+            clearTimeout(timer);
+            socket.disconnect();
+            resolve(error.message);
+        });
+    });
+}
+
 export function once<T = unknown>(
     socket: Socket,
     event: string,

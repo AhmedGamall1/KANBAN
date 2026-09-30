@@ -15,6 +15,7 @@ import {
 import {
     connectExpectingFailure,
     connectSocket,
+    connectWithOrigin,
     joinBoard,
     once,
     watchForSilence,
@@ -87,6 +88,18 @@ describe('realtime gateway', () => {
 
     it('refuses a handshake with no session cookie', async () => {
         await expect(connectExpectingFailure(app)).resolves.toBe('Unauthorized');
+    });
+
+    it('refuses a socket opened from a foreign origin, even with a valid cookie', async () => {
+        await expect(
+            connectWithOrigin(app, member.cookie, 'https://attacker.example'),
+        ).resolves.toBe('Origin not allowed');
+    });
+
+    it('accepts a socket from the configured origin', async () => {
+        await expect(
+            connectWithOrigin(app, member.cookie, 'http://localhost:5173'),
+        ).resolves.toBe('connected');
     });
 
     it('gives a joining member their role, sequence and presence', async () => {
