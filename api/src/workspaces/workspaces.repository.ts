@@ -26,15 +26,6 @@ function toWorkspace(row: WorkspaceRow): Workspace {
 export class WorkspacesRepository {
     constructor(private readonly db: DatabaseService) { }
 
-    async create(name: string, tx?: Queryable): Promise<Workspace> {
-        const { rows } = await (tx ?? this.db).query<WorkspaceRow>(
-            `INSERT INTO workspaces (name) VALUES ($1) RETURNING *`,
-            [name],
-        );
-
-        return toWorkspace(rows[0]);
-    }
-
     async listForUser(userId: string): Promise<WorkspaceWithRole[]> {
         const { rows } = await this.db.query<WorkspaceRow & { role: Role }>(
             `SELECT w.*, m.role

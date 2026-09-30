@@ -169,16 +169,14 @@ export async function joinWorkspace(
         .expect(200);
 }
 
-export async function createProductionApp(
-    clientDir: string,
-): Promise<INestApplication> {
+export async function createConfiguredApp(): Promise<INestApplication> {
     const moduleRef = await Test.createTestingModule({
         imports: [AppModule],
     }).compile();
 
     const app = moduleRef.createNestApplication<NestExpressApplication>();
 
-    configureApp(app, { clientDir });
+    configureApp(app);
 
     await app.init();
 
