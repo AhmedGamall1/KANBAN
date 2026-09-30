@@ -6,6 +6,7 @@ import { configureApp, resolveClientDir } from './bootstrap';
 import type { Env } from './config/env.validation';
 import { Logger } from '@nestjs/common';
 import { migrate } from './database/migrator';
+import { syncAppRolePassword } from './database/app-role';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -29,6 +30,13 @@ async function bootstrap() {
       ? 'Schema up to date'
       : `Applied ${applied.length} migration(s)`,
   );
+
+  const role = await syncAppRolePassword(
+    config.get('MIGRATION_DATABASE_URL', { infer: true }),
+    config.get('DATABASE_URL', { infer: true }),
+  );
+
+  logger.log(`Password for role ${role} set from DATABASE_URL`);
 
   const port = config.get('PORT', { infer: true });
 
