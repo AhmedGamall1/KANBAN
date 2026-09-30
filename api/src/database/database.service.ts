@@ -24,7 +24,7 @@ export class DatabaseService
   constructor(@Inject(PG_POOL) private readonly pool: Pool) { }
 
   async onModuleInit(): Promise<void> {
-    await this.ping();
+    await this.assertRowLevelSecurityApplies();
     this.logger.log('Database connection established');
   }
 
@@ -33,8 +33,23 @@ export class DatabaseService
     this.logger.log('Database pool closed');
   }
 
-  async ping(): Promise<void> {
-    await this.pool.query('SELECT 1');
+  private async assertRowLevelSecurityApplies(): Promise<void> {
+    const { rows } = await this.pool.query<{ role: string; bypasses: boolean }>(
+      `SELECT r.rolname AS role,
+              r.rolsuper OR r.rolbypassrls OR EXISTS (
+                SELECT 1 FROM pg_class c
+                 WHERE c.relrowsecurity
+                   AND pg_has_role(current_user, c.relowner, 'MEMBER')
+              ) AS bypasses
+         FROM pg_roles r
+        WHERE r.rolname = current_user`,
+    );
+
+    if (rows[0]?.bypasses) {
+      throw new Error(
+        `Refusing to start: role ${rows[0].role} bypasses row-level security`,
+      );
+    }
   }
 
   query<T extends QueryResultRow>(
