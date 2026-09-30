@@ -1,5 +1,27 @@
+(security_headers) {
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy strict-origin-when-cross-origin
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		-Server
+		-X-Powered-By
+	}
+}
+
 {$SITE_ADDRESS::80} {
+	root * /srv
+
+	log {
+		output stdout
+		format console
+	}
+
+	import security_headers
+
 	handle /api/* {
+		encode zstd gzip
 		reverse_proxy api:3000
 	}
 
@@ -7,9 +29,21 @@
 		reverse_proxy api:3000
 	}
 
+	handle /assets/* {
+		encode zstd gzip
+		header >Cache-Control "public, max-age=31536000, immutable"
+		file_server
+	}
+
 	handle {
-		root * /srv
+		encode zstd gzip
+		header Cache-Control "no-cache"
 		try_files {path} /index.html
 		file_server
+	}
+
+	handle_errors {
+		import security_headers
+		respond "{err.status_code} {err.status_text}"
 	}
 }
