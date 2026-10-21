@@ -175,19 +175,21 @@ export default function BoardPage() {
                   />
                 ))}
 
+                {canEdit ? (
+                  <button
+                    type="button"
+                    onClick={() => setDialog("column")}
+                    className="flex w-72 shrink-0 items-center gap-1.5 rounded-card border border-dashed border-line-strong px-3 py-2.5 text-ink-muted transition-colors hover:bg-subtle hover:text-ink"
+                  >
+                    <PlusIcon />
+                    Add a column
+                  </button>
+                ) : (
+                  <div aria-hidden="true" className="w-72 shrink-0" />
+                )}
+
                 <CursorLayer cursors={cursors} presence={presence} />
               </div>
-
-              {canEdit && (
-                <button
-                  type="button"
-                  onClick={() => setDialog("column")}
-                  className="flex w-72 shrink-0 items-center gap-1.5 rounded-card border border-dashed border-line-strong px-3 py-2.5 text-ink-muted transition-colors hover:bg-subtle hover:text-ink"
-                >
-                  <PlusIcon />
-                  Add a column
-                </button>
-              )}
             </div>
           </div>
         )}
