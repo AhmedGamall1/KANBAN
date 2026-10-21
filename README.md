@@ -9,6 +9,14 @@ isolation** and **real-time collaboration**.
 
 ---
 
+## Screenshots
+
+In [`docs/screenshots/`](docs/screenshots/): [the board](docs/screenshots/board.png),
+[four people collaborating live](docs/screenshots/live-collaboration.png), and
+[the card dialog](docs/screenshots/card-dialog.png).
+
+---
+
 ## What it does
 
 **Workspaces and people**
@@ -194,7 +202,7 @@ share one origin and there is no CORS anywhere.
 
 ```
 api/
-  migrations/        18 forward-only .sql files, including every RLS policy
+  migrations/        21 forward-only .sql files, including every RLS policy
   scripts/migrate.ts hand-rolled runner
   src/
     access/          role resolution and the guards that use it
