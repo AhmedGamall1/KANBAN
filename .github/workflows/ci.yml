@@ -82,26 +82,50 @@ jobs:
 
   images:
     name: Images
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     needs: [api, web]
+    permissions:
+      contents: read
+      packages: write
+
+    env:
+      PUBLISH: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
 
     steps:
       - uses: actions/checkout@v4
 
       - uses: docker/setup-buildx-action@v3
 
+      - name: Log in to GHCR
+        if: env.PUBLISH == 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Build API image
         uses: docker/build-push-action@v6
         with:
           context: api
-          push: false
-          cache-from: type=gha,scope=api
-          cache-to: type=gha,mode=max,scope=api
+          platforms: linux/arm64
+          push: ${{ env.PUBLISH == 'true' }}
+          tags: |
+            ghcr.io/ahmedgamall1/collab-api:${{ github.sha }}
+            ghcr.io/ahmedgamall1/collab-api:latest
+          labels: org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+          cache-from: type=gha,scope=api-arm64
+          cache-to: type=gha,mode=max,scope=api-arm64
 
       - name: Build web image
         uses: docker/build-push-action@v6
         with:
           context: web
-          push: false
-          cache-from: type=gha,scope=web
-          cache-to: type=gha,mode=max,scope=web
+          platforms: linux/arm64
+          push: ${{ env.PUBLISH == 'true' }}
+          tags: |
+            ghcr.io/ahmedgamall1/collab-web:${{ github.sha }}
+            ghcr.io/ahmedgamall1/collab-web:latest
+          labels: org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+          cache-from: type=gha,scope=web-arm64
+          cache-to: type=gha,mode=max,scope=web-arm64
