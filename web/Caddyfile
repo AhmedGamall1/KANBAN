@@ -1,3 +1,10 @@
+{
+	servers {
+		trusted_proxies static private_ranges
+		client_ip_headers CF-Connecting-IP
+	}
+}
+
 (security_headers) {
 	header {
 		Strict-Transport-Security "max-age=31536000"
@@ -22,11 +29,15 @@
 
 	handle /api/* {
 		encode zstd gzip
-		reverse_proxy api:3000
+		reverse_proxy api:3000 {
+			header_up X-Forwarded-For {client_ip}
+		}
 	}
 
 	handle /socket.io/* {
-		reverse_proxy api:3000
+		reverse_proxy api:3000 {
+			header_up X-Forwarded-For {client_ip}
+		}
 	}
 
 	handle /assets/* {

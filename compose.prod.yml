@@ -10,6 +10,7 @@ services:
   db:
     image: postgres:18-alpine
     restart: unless-stopped
+    mem_limit: 300m
     environment:
       POSTGRES_USER: collab
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
@@ -27,6 +28,7 @@ services:
     image: ghcr.io/ahmedgamall1/collab-api:${IMAGE_TAG:-latest}
     build: ./api
     restart: unless-stopped
+    mem_limit: 400m
     depends_on:
       db:
         condition: service_healthy
@@ -47,21 +49,20 @@ services:
     image: ghcr.io/ahmedgamall1/collab-web:${IMAGE_TAG:-latest}
     build: ./web
     restart: unless-stopped
+    mem_limit: 100m
     depends_on:
       api:
         condition: service_started
-    environment:
-      SITE_ADDRESS: ${SITE_ADDRESS:?set SITE_ADDRESS in .env}
-    ports:
-      - "${HTTP_PORT:-80}:80"
-      - "${HTTPS_PORT:-443}:443"
-      - "${HTTPS_PORT:-443}:443/udp"
-    volumes:
-      - caddy_data:/data
-      - caddy_config:/config
+    networks:
+      default:
+      edge:
+        aliases:
+          - collab-web
     logging: *logging
 
 volumes:
   db_data:
-  caddy_data:
-  caddy_config:
+
+networks:
+  edge:
+    external: true
