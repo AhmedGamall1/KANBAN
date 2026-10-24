@@ -1,4 +1,5 @@
 import type { INestApplication } from '@nestjs/common';
+import { SchedulerRegistry } from '@nestjs/schedule';
 import request from 'supertest';
 import { MaintenanceService } from '../src/maintenance/maintenance.service';
 import {
@@ -46,6 +47,13 @@ describe('maintenance sweep', () => {
 
         return rows[0].count;
     }
+
+    it('schedules the sweep hourly and once after boot', () => {
+        const registry = app.get(SchedulerRegistry);
+
+        expect(registry.getCronJobs().size).toBe(1);
+        expect(registry.getTimeouts()).toHaveLength(1);
+    });
 
     it('deletes expired sessions and leaves live ones', async () => {
         const user = await signUp(app);

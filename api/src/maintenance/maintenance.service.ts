@@ -16,9 +16,17 @@ export class MaintenanceService {
 
     constructor(private readonly config: ConfigService<Env, true>) { }
 
-    @Timeout(30_000)
     @Cron(CronExpression.EVERY_HOUR)
-    async scheduledSweep(): Promise<void> {
+    async hourlySweep(): Promise<void> {
+        await this.runScheduledSweep();
+    }
+
+    @Timeout(30_000)
+    async startupSweep(): Promise<void> {
+        await this.runScheduledSweep();
+    }
+
+    private async runScheduledSweep(): Promise<void> {
         try {
             const result = await this.sweep();
 
