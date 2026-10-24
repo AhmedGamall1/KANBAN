@@ -1,6 +1,6 @@
 import { DragDropProvider } from "@dnd-kit/react";
 import { useRef, useState } from "react";
-import { useParams } from "react-router";
+import { Link, useParams } from "react-router";
 import { useBoard } from "@/boards/useBoard";
 import { useBoardDrag } from "@/boards/useBoardDrag";
 import { useCreateCard } from "@/boards/useCards";
@@ -8,13 +8,20 @@ import BoardColumn from "@/components/board/BoardColumn";
 import BoardDialogs, {
   type BoardDialog,
 } from "@/components/board/BoardDialogs";
+import BoardTips from "@/components/board/BoardTips";
 import CardDrawer from "@/components/board/CardDrawer";
 import ConnectionStatus from "@/components/board/ConnectionStatus";
 import CursorLayer from "@/components/board/CursorLayer";
 import PresenceBar from "@/components/board/PresenceBar";
 import Button from "@/components/ui/Button";
 import Spinner from "@/components/ui/Spinner";
-import { PencilIcon, PlusIcon, TrashIcon } from "@/components/ui/icons";
+import { buttonClasses } from "@/components/ui/buttonStyles";
+import {
+  MembersIcon,
+  PencilIcon,
+  PlusIcon,
+  TrashIcon,
+} from "@/components/ui/icons";
 import { ApiError } from "@/lib/api";
 import { useBoardSocket } from "@/realtime/useBoardSocket";
 import { useCursorBroadcast } from "@/realtime/useCursorBroadcast";
@@ -57,6 +64,8 @@ export default function BoardPage() {
   const knownRoles = [role, workspace?.role].filter(Boolean);
   const canEdit =
     knownRoles.length > 0 && knownRoles.every((known) => known !== "viewer");
+  const isOwner = (role ?? workspace?.role) === "owner";
+  const membersPath = `/workspaces/${data.board.workspaceId}/members`;
 
   const boardColumns = data.columnOrder.map((id) => data.columnsById[id]);
 
@@ -97,6 +106,17 @@ export default function BoardPage() {
 
           <PresenceBar users={presence} />
 
+          {isOwner && presence.length <= 1 && (
+            <Link
+              to={membersPath}
+              title="Invite someone to see live collaboration"
+              className={buttonClasses({ variant: "secondary", size: "sm" })}
+            >
+              <MembersIcon />
+              Invite someone
+            </Link>
+          )}
+
           {canEdit && (
             <div className="flex shrink-0 items-center gap-1">
               <button
@@ -121,6 +141,12 @@ export default function BoardPage() {
             </div>
           )}
         </header>
+
+        <BoardTips
+          workspaceId={data.board.workspaceId}
+          canEdit={canEdit}
+          canInvite={isOwner}
+        />
 
         {boardColumns.length === 0 ? (
           <div className="flex flex-1 items-center justify-center px-8">
