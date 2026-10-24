@@ -1,5 +1,8 @@
 # Collab Board
 
+**Live demo: [kanban.ahmedgamal.website](https://kanban.ahmedgamal.website)** — click *Try the demo*, no
+sign-up needed.
+
 A Trello-style kanban board where a whole team works on the same board at once — cards move under
 your cursor as someone else drags them, avatars show who is looking, and every change is written to
 an append-only event log that doubles as the activity feed.
