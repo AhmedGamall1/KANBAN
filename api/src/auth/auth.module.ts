@@ -8,9 +8,10 @@ import { AuthGuard } from './auth.guard';
 import { OauthController } from './oauth/oauth.controller';
 import { OauthService } from './oauth/oauth.service';
 import { IdentitiesRepository } from './oauth/identities.repository';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
-    imports: [UsersModule],
+    imports: [UsersModule, NotificationsModule],
     controllers: [AuthController, OauthController],
     providers: [
         AuthService,

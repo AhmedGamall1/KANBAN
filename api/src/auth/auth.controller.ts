@@ -2,6 +2,7 @@ import {
     Body,
     Controller,
     Get,
+    Headers,
     HttpCode,
     HttpStatus,
     Post,
@@ -21,12 +22,14 @@ import { Public } from '../common/public.decorator';
 import { SESSION_COOKIE, sessionCookieOptions } from './session-cookie';
 import { Throttle } from '@nestjs/throttler';
 import { AUTH_THROTTLE } from 'src/common/throttle';
+import { Notifier } from '../notifications/notifier.service';
 
 @Controller('auth')
 export class AuthController {
     constructor(
         private readonly auth: AuthService,
         private readonly config: ConfigService<Env, true>,
+        private readonly notifier: Notifier,
     ) { }
 
     private cookieOptions(): CookieOptions {
@@ -41,9 +44,11 @@ export class AuthController {
     async signup(
         @Body(new ZodValidationPipe(signupSchema)) dto: SignupDto,
         @Res({ passthrough: true }) res: Response,
+        @Headers('cf-ipcountry') country: string | undefined,
     ) {
         const { user, token } = await this.auth.signup(dto);
         res.cookie(SESSION_COOKIE, token, this.cookieOptions());
+        void this.notifier.signedUp(user, 'email', country);
         return { user };
     }
 

@@ -1,4 +1,13 @@
-import { Controller, Get, Logger, Param, Query, Req, Res } from '@nestjs/common';
+import {
+    Controller,
+    Get,
+    Headers,
+    Logger,
+    Param,
+    Query,
+    Req,
+    Res,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { randomBytes } from 'node:crypto';
 import type { CookieOptions, Request, Response } from 'express';
@@ -9,6 +18,7 @@ import type { Env } from '../../config/env.validation';
 import { OauthService, UnverifiedEmailError } from './oauth.service';
 import type { Provider } from './oauth.providers';
 import { sessionCookieOptions } from '../session-cookie';
+import { Notifier } from '../../notifications/notifier.service';
 
 const providerSchema = z.enum(['google', 'github']);
 
@@ -34,6 +44,7 @@ export class OauthController {
     constructor(
         private readonly oauth: OauthService,
         private readonly config: ConfigService<Env, true>,
+        private readonly notifier: Notifier,
     ) { }
 
     private get origin(): string {
@@ -60,6 +71,7 @@ export class OauthController {
         @Param('provider', new ZodValidationPipe(providerSchema)) provider: Provider,
         @Query('code') code: string | undefined,
         @Query('state') state: string | undefined,
+        @Headers('cf-ipcountry') country: string | undefined,
         @Req() req: Request,
         @Res() res: Response,
     ): Promise<void> {
@@ -75,7 +87,11 @@ export class OauthController {
         }
 
         try {
-            const token = await this.oauth.signIn(provider, code);
+            const { token, user, created } = await this.oauth.signIn(provider, code);
+
+            if (created) {
+                void this.notifier.signedUp(user, provider, country);
+            }
 
             res.cookie(
                 'sid',

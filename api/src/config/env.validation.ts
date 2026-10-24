@@ -12,6 +12,8 @@ export const envSchema = z.object({
   GOOGLE_CLIENT_SECRET: z.string().min(1).optional(),
   GITHUB_CLIENT_ID: z.string().min(1).optional(),
   GITHUB_CLIENT_SECRET: z.string().min(1).optional(),
+  RESEND_API_KEY: z.string().min(1).optional(),
+  NOTIFY_EMAIL: z.email().optional(),
   TRUST_PROXY: z
     .enum(['true', 'false'])
     .default('false')

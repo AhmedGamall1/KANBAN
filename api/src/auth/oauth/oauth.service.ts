@@ -66,7 +66,10 @@ export class OauthService {
         return url.toString();
     }
 
-    async signIn(provider: Provider, code: string): Promise<string> {
+    async signIn(
+        provider: Provider,
+        code: string,
+    ): Promise<{ token: string; user: User; created: boolean }> {
         const accessToken = await this.exchangeCode(provider, code);
         const profile = await PROVIDERS[provider].fetchProfile(accessToken);
 
@@ -74,9 +77,10 @@ export class OauthService {
             throw new UnverifiedEmailError();
         }
 
-        const user = await this.resolveUser(provider, profile);
+        const { user, created } = await this.resolveUser(provider, profile);
+        const token = await this.auth.createSession(user.id);
 
-        return this.auth.createSession(user.id);
+        return { token, user, created };
     }
 
     private async exchangeCode(provider: Provider, code: string): Promise<string> {
@@ -112,7 +116,7 @@ export class OauthService {
     private resolveUser(
         provider: Provider,
         profile: OAuthProfile,
-    ): Promise<User> {
+    ): Promise<{ user: User; created: boolean }> {
         return this.db.transaction(async (tx) => {
             const linked = await this.identities.findUser(
                 provider,
@@ -121,7 +125,10 @@ export class OauthService {
             );
 
             if (linked) {
-                return this.users.applyProviderAvatar(linked.id, profile.avatarUrl, tx);
+                return {
+                    user: await this.users.applyProviderAvatar(linked.id, profile.avatarUrl, tx),
+                    created: false,
+                };
             }
 
             const existing = await this.users.findByEmail(profile.email, tx);
@@ -143,7 +150,10 @@ export class OauthService {
                 tx,
             );
 
-            return this.users.applyProviderAvatar(user.id, profile.avatarUrl, tx);
+            return {
+                user: await this.users.applyProviderAvatar(user.id, profile.avatarUrl, tx),
+                created: existing === null,
+            };
         });
     }
 }
